@@ -183,6 +183,10 @@ class GaussianRasterizer(nn.Module):
                 raster_settings.projmatrix)
             
         return visible
+    
+    def set_raster_viewproj(self, viewmatrix, projmatrix):
+        self.raster_settings.viewmatrix = viewmatrix
+        self.raster_settings.projmatrix = projmatrix
 
     def forward(self, means3D, means2D, opacities, shs = None, colors_precomp = None, scales = None, rotations = None, cov3D_precomp = None):
         
