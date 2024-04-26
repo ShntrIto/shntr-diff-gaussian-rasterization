@@ -115,7 +115,7 @@ __device__ float3 computeCov2D(const float3& mean, float focal_x, float focal_y,
 
 
 // Forward version of 2D covariance matrix computation
-__device__ float3 computesphericalCov2D(const float3& mean, float focal_x, float focal_y, float tan_fovx, float tan_fovy, const float* cov3D, const float* viewmatrix, const int H, const int W)
+__device__ float3 computesphericalCov2D(const float3& mean, float focal_x, float focal_y, float tan_fovx, float tan_fovy, const float* cov3D, const float* viewmatrix, const int Hight, const int Width)
 {
     // The following models the steps outlined by equations 29
     // and 31 in "EWA Splatting" (Zwicker et al., 2002). 
@@ -128,8 +128,8 @@ __device__ float3 computesphericalCov2D(const float3& mean, float focal_x, float
 
 	// Try OmniGS Jacobian
 	glm::mat3 J = glm::mat3(
-		(W*t.)/(2*M_PI)*(t.x*t.x + t.z*t.z), 0.0f, -1*(W*t.)/(2*M_PI)*(t.x*t.x + t.z*t.z),
-		-1*(H*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), H*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(H*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
+		(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z), 0.0f, -1*(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z),
+		-1*(Height*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Height*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Height*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
 		0, 0, 0);
 
     // float3 t_unit_focal = {0.0f, 0.0f, t_length};
