@@ -285,8 +285,8 @@ __global__ void computesphericalCov2DCUDA(int P,
 	const float* dL_dconics,
 	float3* dL_dmeans,
 	float* dL_dcov,
-	const int* H,
-	const int* W)
+	const int Hight,
+	const int Width)
 {
 	auto idx = cg::this_grid().thread_rank();
 	if (idx >= P || !(radii[idx] > 0))
@@ -307,8 +307,8 @@ __global__ void computesphericalCov2DCUDA(int P,
 
 	// Try OmniGS Jacobian
 	glm::mat3 J = glm::mat3(
-		(W*t.)/(2*M_PI)*(t.x*t.x + t.z*t.z), 0.0f, -1*(W*t.)/(2*M_PI)*(t.x*t.x + t.z*t.z),
-		-1*(H*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), H*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(H*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
+		(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z), 0.0f, -1*(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z),
+		-1*(Hight*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Hight*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Hight*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
 		0, 0, 0);
 	// glm::mat3 J = glm::mat3(
 	// 	h_x / t_unit_focal.z, 0.0f, -(h_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
@@ -873,7 +873,7 @@ void BACKWARD::preprocessspherical(
 		viewmatrix,
 		projmatrix,
 		campos,
-		H, W
+		H, W,
 		(float3*)dL_dmean2D,
 		(glm::vec3*)dL_dmean3D,
 		dL_dcolor,
