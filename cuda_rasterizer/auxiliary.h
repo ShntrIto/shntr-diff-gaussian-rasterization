@@ -40,7 +40,7 @@ __device__ const float SH_C3[] = {
 
 __forceinline__ __device__ float ndc2Pix(float v, int S)
 {
-	return ((v + 1.0) * S - 1.0) * 0.5;
+	return ((v + 1.0) * S ) * 0.5;
 }
 
 __forceinline__ __device__ void getRect(const float2 p, int max_radius, uint2& rect_min, uint2& rect_max, dim3 grid)
@@ -103,9 +103,9 @@ __forceinline__ __device__ float3 point_to_equirect(
 	float3 direction_vector = transformPoint4x3(p_orig, viewmatrix);
 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
 	float longitude = atan2f(direction_vector.x, direction_vector.z);
-	float latitude = atan2f(direction_vector.y , sqrtf(direction_vector.x * direction_vector.x + direction_vector.z * direction_vector.z));
-	float normalized_latitude = latitude / (M_PI / 2.0f);
+	float latitude = asinf(direction_vector.y , direction_vector_length);
 	float normalized_longitude = longitude / M_PI;
+	float normalized_latitude = 2 * latitude / M_PI;
 	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
 	return p_view;
 }
