@@ -284,7 +284,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 	const float* view_matrix,
 	const float* dL_dconics,
 	float3* dL_dmeans,
-	float* dL_dcov
+	float* dL_dcov,
 	const int* H,
 	const int* W)
 {
