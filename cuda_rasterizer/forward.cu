@@ -128,7 +128,7 @@ __device__ float3 computesphericalCov2D(const float3& mean, float focal_x, float
 
 	// Try OmniGS Jacobian
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z), 0.0f, -1*(Width*t.z)/(2*M_PI)*(t.x*t.x + t.z*t.z),
+		(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
 		-1*(Height*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Height*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Height*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
 		0, 0, 0);
 
