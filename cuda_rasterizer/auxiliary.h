@@ -40,6 +40,11 @@ __device__ const float SH_C3[] = {
 
 __forceinline__ __device__ float ndc2Pix(float v, int S)
 {
+	return ((v + 1.0) * S - 1.0) * 0.5;
+}
+
+__forceinline__ __device__ float ndc2Pix_spherical(float v, int S)
+{
 	return ((v + 1.0) * S ) * 0.5;
 }
 
