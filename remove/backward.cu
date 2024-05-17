@@ -284,7 +284,9 @@ __global__ void computesphericalCov2DCUDA(int P,
 	const float* view_matrix,
 	const float* dL_dconics,
 	float3* dL_dmeans,
-	float* dL_dcov)
+	float* dL_dcov,
+	const int Hight,
+	const int Width)
 {
 	auto idx = cg::this_grid().thread_rank();
 	if (idx >= P || !(radii[idx] > 0))
@@ -301,8 +303,13 @@ __global__ void computesphericalCov2DCUDA(int P,
     
     float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 
-    float3 t_unit_focal = {0.0f, 0.0f, t_length};
+	// Try OmniGS Jacobian
+	// glm::mat3 J = glm::mat3(
+	// 	(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
+	// 	-1*(Hight*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Hight*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Hight*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
+	// 	0, 0, 0);
 
+    float3 t_unit_focal = {0.0f, 0.0f, t_length};
 	glm::mat3 J = glm::mat3(
 		h_x / t_unit_focal.z, 0.0f, -(h_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
 		0.0f, h_x / t_unit_focal.z, -(h_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
@@ -540,6 +547,7 @@ __global__ void preprocessspehricalCUDA(
 	const float* view_matrix,
 	const float* proj,
 	const glm::vec3* campos,
+	const int W, int H,
 	const float3* dL_dmean2D,
 	glm::vec3* dL_dmeans,
 	float* dL_dcolor,
@@ -822,6 +830,7 @@ void BACKWARD::preprocessspherical(
 	const float focal_x, float focal_y,
 	const float tan_fovx, float tan_fovy,
 	const glm::vec3* campos,
+	const int W, int H,
 	const float3* dL_dmean2D,
 	const float* dL_dconic,
 	glm::vec3* dL_dmean3D,
@@ -845,7 +854,9 @@ void BACKWARD::preprocessspherical(
 		viewmatrix,
 		dL_dconic,
 		(float3*)dL_dmean3D,
-		dL_dcov3D);
+		dL_dcov3D,
+		H,
+		W);
 
 	// Propagate gradients for remaining steps: finish 3D mean gradients,
 	// propagate color gradients to SH (if desireD), propagate 3D covariance
@@ -862,6 +873,7 @@ void BACKWARD::preprocessspherical(
 		viewmatrix,
 		projmatrix,
 		campos,
+		H, W,
 		(float3*)dL_dmean2D,
 		(glm::vec3*)dL_dmean3D,
 		dL_dcolor,
