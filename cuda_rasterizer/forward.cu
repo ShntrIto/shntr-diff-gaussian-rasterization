@@ -360,7 +360,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 
 	// If 3D covariance matrix is precomputed, use it, otherwise compute
 	// from scaling and rotation parameters. 
-	const float* cov3D;s
+	const float* cov3D;
 	if (cov3D_precomp != nullptr)
 	{
 		cov3D = cov3D_precomp + idx * 6;
