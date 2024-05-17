@@ -127,16 +127,16 @@ __device__ float3 computesphericalCov2D(const float3& mean, float focal_x, float
     float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 
 	// Try OmniGS Jacobian
-	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
-		-1*(Height*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Height*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Height*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
-		0, 0, 0);
-
-    // float3 t_unit_focal = {0.0f, 0.0f, t_length};
 	// glm::mat3 J = glm::mat3(
-	// 	focal_x / t_unit_focal.z, 0.0f, -(focal_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
-	// 	0.0f, focal_x / t_unit_focal.z, -(focal_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
+	// 	(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
+	// 	-1*(Height*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Height*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Height*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
 	// 	0, 0, 0);
+
+    float3 t_unit_focal = {0.0f, 0.0f, t_length};
+	glm::mat3 J = glm::mat3(
+		focal_x / t_unit_focal.z, 0.0f, -(focal_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
+		0.0f, focal_x / t_unit_focal.z, -(focal_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
+		0, 0, 0);
 
     glm::mat3 W = glm::mat3(
         viewmatrix[0], viewmatrix[4], viewmatrix[8],
