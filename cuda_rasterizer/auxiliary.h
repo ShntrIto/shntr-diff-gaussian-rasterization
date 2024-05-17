@@ -101,6 +101,20 @@ __forceinline__ __device__ float3 transformVec4x3Transpose(const float3& p, cons
 	return transformed;
 }
 
+// __forceinline__ __device__ float3 point_to_equirect(
+// 	float3 p_orig,
+// 	const float* viewmatrix)
+// {
+// 	float3 direction_vector = transformPoint4x3(p_orig, viewmatrix);
+// 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
+// 	float longitude = atan2f(direction_vector.x, direction_vector.z);
+// 	float latitude = asinf(direction_vector.y / direction_vector_length);
+// 	float normalized_longitude = longitude / M_PI;
+// 	float normalized_latitude = 2 * latitude / M_PI;
+// 	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
+// 	return p_view;
+// }
+
 __forceinline__ __device__ float3 point_to_equirect(
 	float3 p_orig,
 	const float* viewmatrix)
@@ -108,13 +122,12 @@ __forceinline__ __device__ float3 point_to_equirect(
 	float3 direction_vector = transformPoint4x3(p_orig, viewmatrix);
 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
 	float longitude = atan2f(direction_vector.x, direction_vector.z);
-	float latitude = asinf(direction_vector.y / direction_vector_length);
+	float latitude = atan2f(direction_vector.y , sqrtf(direction_vector.x * direction_vector.x + direction_vector.z * direction_vector.z));
+	float normalized_latitude = latitude / (M_PI / 2.0f);
 	float normalized_longitude = longitude / M_PI;
-	float normalized_latitude = 2 * latitude / M_PI;
 	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
 	return p_view;
 }
-
 
 __forceinline__ __device__ float dnormvdz(float3 v, float3 dv)
 {
@@ -194,7 +207,7 @@ __forceinline__ __device__ bool in_sphere(int idx,
     float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
 	p_view = point_to_equirect(p_orig, viewmatrix);
 	// if (p_view.z <= 0.0001f || p_view.z >= 10000.0f)
-	if (p_view.z <= 0.02f)
+	if (p_view.z <= 0.02f || p_view.z >= 100.0f)
 	{
 		if (prefiltered)
 		{
