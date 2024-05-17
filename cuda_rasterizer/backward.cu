@@ -284,7 +284,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 	const float* view_matrix,
 	const float* dL_dconics,
 	float3* dL_dmeans,
-	float* dL_dcov
+	float* dL_dcov,
 	const int Hight, // use Height for introducing Jacobian
 	const int Width  // use Width as well
 	)
@@ -855,7 +855,7 @@ void BACKWARD::preprocessspherical(
 		viewmatrix,
 		dL_dconic,
 		(float3*)dL_dmean3D,
-		dL_dcov3D
+		dL_dcov3D,
 		H, //add Height and Width
 		W
 		);
