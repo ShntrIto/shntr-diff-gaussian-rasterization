@@ -43,6 +43,12 @@ __forceinline__ __device__ float ndc2Pix(float v, int S)
 	return ((v + 1.0) * S - 1.0) * 0.5;
 }
 
+// use ndc2Pix_spherical for rendering ERP image
+__forceinline__ __device__ float ndc2Pix_spherical(float v, int S)
+{
+	return ((v + 1.0) * S ) * 0.5;
+}
+
 __forceinline__ __device__ void getRect(const float2 p, int max_radius, uint2& rect_min, uint2& rect_max, dim3 grid)
 {
 	rect_min = {
