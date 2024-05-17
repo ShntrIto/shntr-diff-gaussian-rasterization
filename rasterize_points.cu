@@ -59,7 +59,7 @@ RasterizeGaussiansCUDA(
   }
 
   // 確認
-  printf("This is shntr-diff-gaussian-rasterization!")
+  printf("This is shntr-diff-gaussian-rasterization!");
   
   const int P = means3D.size(0);
   const int H = image_height;
