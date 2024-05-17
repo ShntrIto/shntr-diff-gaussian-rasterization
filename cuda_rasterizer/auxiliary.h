@@ -193,14 +193,14 @@ __forceinline__ __device__ bool in_sphere(int idx,
 {
     float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
 	p_view = point_to_equirect(p_orig, viewmatrix);
-	if (p_view.z <= 0.0001f || p_view.z >= 10000.0f)
+	// if (p_view.z <= 0.0001f || p_view.z >= 10000.0f)
+	if (p_view.z <= 0.02f)
 	{
 		if (prefiltered)
 		{
 			printf("Point is filtered although prefiltered is set. This shouldn't happen!");
 			__trap();
 		}
-		printf("testtest")
 		return false;
 	}
 	return true;
