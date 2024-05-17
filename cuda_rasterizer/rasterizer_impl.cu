@@ -362,6 +362,7 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 	int* radii,
 	bool debug)
 {
+	//焦点距離が怪しい気がする
 	const float focal_y = height / (2.0f * tan_fovy) / 2;
 	const float focal_x = width / (2.0f * tan_fovx) / 4;
 
