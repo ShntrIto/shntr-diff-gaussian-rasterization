@@ -665,6 +665,7 @@ void CudaRasterizer::Rasterizer::backwardspherical(
 		focal_x, focal_y,
 		tan_fovx, tan_fovy,
 		(glm::vec3*)campos,
+		width, height
 		(float3*)dL_dmean2D,
 		dL_dconic,
 		(glm::vec3*)dL_dmean3D,
