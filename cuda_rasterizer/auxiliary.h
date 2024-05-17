@@ -200,6 +200,7 @@ __forceinline__ __device__ bool in_sphere(int idx,
 			printf("Point is filtered although prefiltered is set. This shouldn't happen!");
 			__trap();
 		}
+		printf("testtest")
 		return false;
 	}
 	return true;
