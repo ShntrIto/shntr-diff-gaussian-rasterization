@@ -360,7 +360,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 
 	// If 3D covariance matrix is precomputed, use it, otherwise compute
 	// from scaling and rotation parameters. 
-	const float* cov3D;
+	const float* cov3D;s
 	if (cov3D_precomp != nullptr)
 	{
 		cov3D = cov3D_precomp + idx * 6;
@@ -372,7 +372,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 	}
 
 	// Compute 2D screen-space covariance matrix
-	float3 cov = computesphericalCov2D(p_orig, focal_x, focal_y, tan_fovx, tan_fovy, cov3D, viewmatrix, Height, Width);
+	float3 cov = computesphericalCov2D(p_orig, focal_x, focal_y, tan_fovx, tan_fovy, cov3D, viewmatrix, H, W);
 	// Invert covariance (EWA algorithm)
 	float det = (cov.x * cov.z - cov.y * cov.y);
 	if (det == 0.0f)
