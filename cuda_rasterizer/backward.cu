@@ -303,17 +303,17 @@ __global__ void computesphericalCov2DCUDA(int P,
     
     float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 
-    // float3 t_unit_focal = {0.0f, 0.0f, t_length};
-
 	// Try OmniGS Jacobian
-	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
-		-1*(Hight*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Hight*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Hight*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
-		0, 0, 0);
 	// glm::mat3 J = glm::mat3(
-	// 	h_x / t_unit_focal.z, 0.0f, -(h_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
-	// 	0.0f, h_x / t_unit_focal.z, -(h_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
+	// 	(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)), 0.0f, -1*(Width*t.z)/(2*M_PI*(t.x*t.x + t.z*t.z)),
+	// 	-1*(Hight*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Hight*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Hight*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
 	// 	0, 0, 0);
+
+    float3 t_unit_focal = {0.0f, 0.0f, t_length};
+	glm::mat3 J = glm::mat3(
+		h_x / t_unit_focal.z, 0.0f, -(h_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
+		0.0f, h_x / t_unit_focal.z, -(h_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
+		0, 0, 0);
 
 	glm::mat3 W = glm::mat3(
 		view_matrix[0], view_matrix[4], view_matrix[8],
