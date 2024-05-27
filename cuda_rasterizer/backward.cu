@@ -705,7 +705,7 @@ renderCUDA(
 			const int global_id = collected_id[j];
 			for (int ch = 0; ch < C; ch++)
 			{
-				const float c = collected_colors[ch * BLOCK_SIZE + j];
+				const float c = collected_colors[ch * BLOCK_SIZE + j];                                                                                       
 				// Update last color (to be used in the next iteration)
 				accum_rec[ch] = last_alpha * last_color[ch] + (1.f - last_alpha) * accum_rec[ch];
 				last_color[ch] = c;
