@@ -590,15 +590,15 @@ __global__ void preprocesssphericalCUDA(
 	printf("proj[11]: %f\n", proj[11]);
 	printf("proj[12]: %f\n", proj[12]);
 	
-	printf("m_hom.x: %f\n", m_hom.x);
-	printf("m_hom.y: %f\n", m_hom.y);
-	printf("m_hom.z: %f\n", m_hom.z);
-	printf("m_hom.w: %f\n", m_hom.w);
+	// printf("m_hom.x: %f\n", m_hom.x);
+	// printf("m_hom.y: %f\n", m_hom.y);
+	// printf("m_hom.z: %f\n", m_hom.z);
+	// printf("m_hom.w: %f\n", m_hom.w);
 
-	printf("m_w: %f\n", m_w);
+	// printf("m_w: %f\n", m_w);
 
-	printf("mul1: %f\n", mul1);
-	printf("mul2: %f\n", mul2);
+	// printf("mul1: %f\n", mul1);
+	// printf("mul2: %f\n", mul2);
 	// That's the second part of the mean gradient. Previous computation
 	// of cov2D and following SH conversion also affects it.
 	dL_dmeans[idx] += dL_dmean;
