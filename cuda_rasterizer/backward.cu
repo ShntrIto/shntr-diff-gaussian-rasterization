@@ -577,18 +577,18 @@ __global__ void preprocesssphericalCUDA(
 	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
 
 	printf("proj[0]: %f\n", proj[0]);
-	printf("proj[1]: %f\n", proj[1]);
-	printf("proj[2]: %f\n", proj[2]);
+	// printf("proj[1]: %f\n", proj[1]);
+	// printf("proj[2]: %f\n", proj[2]);
 	printf("proj[3]: %f\n", proj[3]);
-	printf("proj[4]: %f\n", proj[4]);
-	printf("proj[5]: %f\n", proj[5]);
-	printf("proj[6]: %f\n", proj[6]);
-	printf("proj[7]: %f\n", proj[7]);
-	printf("proj[8]: %f\n", proj[8]);
-	printf("proj[9]: %f\n", proj[9]);
-	printf("proj[10]: %f\n", proj[10]);
-	printf("proj[11]: %f\n", proj[11]);
-	printf("proj[12]: %f\n", proj[12]);
+	// printf("proj[4]: %f\n", proj[4]);
+	// printf("proj[5]: %f\n", proj[5]);
+	// printf("proj[6]: %f\n", proj[6]);
+	// printf("proj[7]: %f\n", proj[7]);
+	// printf("proj[8]: %f\n", proj[8]);
+	// printf("proj[9]: %f\n", proj[9]);
+	// printf("proj[10]: %f\n", proj[10]);
+	// printf("proj[11]: %f\n", proj[11]);
+	// printf("proj[12]: %f\n", proj[12]);
 	
 	// printf("m_hom.x: %f\n", m_hom.x);
 	// printf("m_hom.y: %f\n", m_hom.y);
