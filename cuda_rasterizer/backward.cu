@@ -537,7 +537,7 @@ __global__ void preprocessCUDA(
 // for the covariance computation and inversion
 // (those are handled by a previous kernel call)
 template<int C>
-__global__ void preprocessspehricalCUDA(
+__global__ void preprocesssphericalCUDA(
 	int P, int D, int M,
 	const float3* means,
 	const int* radii,
@@ -575,7 +575,7 @@ __global__ void preprocessspehricalCUDA(
 	dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
-
+	
 	// That's the second part of the mean gradient. Previous computation
 	// of cov2D and following SH conversion also affects it.
 	dL_dmeans[idx] += dL_dmean;
@@ -652,7 +652,7 @@ renderCUDA(
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
-	const float ddelx_dx = 0.5 * W;
+	const float ddelx_dx = 0.5 * W; // dp_ds
 	const float ddely_dy = 0.5 * H;
 
 	// Traverse all Gaussians
@@ -863,7 +863,7 @@ void BACKWARD::preprocessspherical(
 	// Propagate gradients for remaining steps: finish 3D mean gradients,
 	// propagate color gradients to SH (if desireD), propagate 3D covariance
 	// matrix gradients to scale and rotation.
-	preprocessspehricalCUDA<NUM_CHANNELS> << < (P + 255) / 256, 256 >> > (
+	preprocesssphericalCUDA<NUM_CHANNELS> << < (P + 255) / 256, 256 >> > (
 		P, D, M,
 		(float3*)means3D,
 		radii,
