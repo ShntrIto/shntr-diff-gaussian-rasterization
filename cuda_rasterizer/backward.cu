@@ -514,8 +514,8 @@ __global__ void preprocessCUDA(
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// from rendering procedure
 	glm::vec3 dL_dmean;
-	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w;
-	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w;
+	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w
+	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom_y * m_w * m_w
 	dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
@@ -570,16 +570,16 @@ __global__ void preprocesssphericalCUDA(
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// from rendering procedure
 	glm::vec3 dL_dmean;
-	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w;
-	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w;
+	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w
+	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom.y * m_w * m_w
 	dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
 
-	printf("proj[0]: %f\n", proj[0]);
+	// printf("proj[0]: %f\n", proj[0]);
 	// printf("proj[1]: %f\n", proj[1]);
 	// printf("proj[2]: %f\n", proj[2]);
-	printf("proj[3]: %f\n", proj[3]);
+	// printf("proj[3]: %f\n", proj[3]);
 	// printf("proj[4]: %f\n", proj[4]);
 	// printf("proj[5]: %f\n", proj[5]);
 	// printf("proj[6]: %f\n", proj[6]);
@@ -595,10 +595,11 @@ __global__ void preprocesssphericalCUDA(
 	// printf("m_hom.z: %f\n", m_hom.z);
 	// printf("m_hom.w: %f\n", m_hom.w);
 
-	// printf("m_w: %f\n", m_w);
+	printf("m_w: %f\n", m_w);
 
 	// printf("mul1: %f\n", mul1);
 	// printf("mul2: %f\n", mul2);
+
 	// That's the second part of the mean gradient. Previous computation
 	// of cov2D and following SH conversion also affects it.
 	dL_dmeans[idx] += dL_dmean;
