@@ -630,11 +630,9 @@ __global__ void preprocesssphericalCUDA(
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// OmniGS version
 	glm::vec3 dL_dmean;
-	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w = tx/tz
-	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom.y * m_w * m_w = ty/tz
-	dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
-	dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
-	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
+	dL_dmean.x = J[0][0] * dL_dmean2D[idx].x + J[1][0] * dL_dmean2D[idx].y;
+	dL_dmean.y = J[0][1] * dL_dmean2D[idx].x + J[1][1] * dL_dmean2D[idx].y;
+	dL_dmean.z = J[0][2] * dL_dmean2D[idx].x + J[1][2] * dL_dmean2D[idx].y;
 
 	// That's the second part of the mean gradient. Previous computation
 	// of cov2D and following SH conversion also affects it.
