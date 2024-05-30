@@ -302,12 +302,16 @@ __global__ void computesphericalCov2DCUDA(int P,
 	float3 dL_dconic = { dL_dconics[4 * idx], dL_dconics[4 * idx + 1], dL_dconics[4 * idx + 3] };
     float3 t = transformPoint4x3(mean, view_matrix);
     
-    float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+    // Useful veriables for spherical projection
+	// float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+	float tz2_mtx2 = t.z*t.z - t.z*t.z;
+	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*(t.x*t.x + t.z*t.z))*0.5f, 0.0f, -1*(Width*t.z)/(M_PI*(t.x*t.x + t.z*t.z))*0.5f,
-		-1*(Hight*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Hight*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1*(Hight*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
+		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1*(Width*t.z)/(M_PI*tx2_ptz2)*0.5f,
+		-1*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
 		0, 0, 0);
 	
 	// Original 360 gaussian splatting Jacobian
@@ -389,6 +393,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 	// T = W * J
 	float dL_dJ00 = W[0][0] * dL_dT00 + W[0][1] * dL_dT01 + W[0][2] * dL_dT02;
 	float dL_dJ02 = W[2][0] * dL_dT00 + W[2][1] * dL_dT01 + W[2][2] * dL_dT02;
+	float dL_dJ10 = W[0][0] * dL_dT10 + W[0][1] * dL_dT11 + W[0][2] * dL_dT12; // Add OmniGS Jacobian
 	float dL_dJ11 = W[1][0] * dL_dT10 + W[1][1] * dL_dT11 + W[1][2] * dL_dT12;
 	float dL_dJ12 = W[2][0] * dL_dT10 + W[2][1] * dL_dT11 + W[2][2] * dL_dT12;
 
@@ -396,10 +401,32 @@ __global__ void computesphericalCov2DCUDA(int P,
 	float tz2 = tz * tz;
 	float tz3 = tz2 * tz;
 
+	// Useful variables for OmniGS
+	float tr1 = 1.f / tr;  // 1/tr
+	float tr2 = tr1 * tr1; // 1/(tr^2)
+	float tr4 = tr2 * tr2; // 1/(tr^4)
+
 	// Gradients of loss w.r.t. transformed Gaussian mean t
-	float dL_dtx =  -h_x * tz2 * dL_dJ02;
-	float dL_dty =  -h_y * tz2 * dL_dJ12;
-	float dL_dtz = -h_x * tz2 * dL_dJ00 - h_y * tz2 * dL_dJ11 + (2 * h_x * t.x) * tz3 * dL_dJ02 + (2 * h_y * t.y) * tz3 * dL_dJ12;
+	// Original version
+	// float dL_dtx =  -h_x * tz2 * dL_dJ02;
+	// float dL_dty =  -h_y * tz2 * dL_dJ12;
+	// float dL_dtz = -h_x * tz2 * dL_dJ00 - h_y * tz2 * dL_dJ11 + (2 * h_x * t.x) * tz3 * dL_dJ02 + (2 * h_y * t.y) * tz3 * dL_dJ12;
+	
+	// Gradients of loss w.r.t. transformed Gaussian mean t
+	// OmniGS version
+	float dL_dtx =  -(W*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
+					(W*tz2_mtx2)/(2*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
+					(H*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2*t.x*t.x*tr2 + (t.x*t.x)/tx2_ptz2 - 1)) * dL_dJ10 + 
+					(H*t.x*tr2)/M_PI * (1.f/sqrtf(tx2_ptz2) - (2*sqrtf(tx2_ptz2)/tr2)) * dL_dJ11 +
+					(H*t.x*t.y*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*tr2)/sqrtf(tx2_ptz2) + 1.f/tx2_ptz2) * dL_dJ12;
+	float dL_dty =  (H*t.x*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (2*t.y*t.y*tr2 - 1) * dL_dJ10 +
+					(-2*H*t.y*sqrtf(tx2_ptz2)*tr4)/M_PI * dL_dJ11 + 
+					-(H*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2*t.y*t.y*tr2) * dL_dJ12;
+	float dL_dtz =  (W*tz2_mtx2)/(2*M_PI*(tx2_ptz2)) * dL_dJ00 +
+					(W*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
+					(H*t.x*t.y*t.z*tr2)/(M_PI*sqrt(tx2_ptz2)) * (2.f*tr2+1.f/tx2_ptz2) * dL_dJ10 +
+					(H*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1-2*tx2_ptz2*tr2) * dL_dJ11 +
+					-(H*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1-2*t.z*t.z*tr2+t.z*t.z/tx2_ptz2) * dL_dJ12;
 
 	// Account for transformation of mean to t
 	// t = transformPoint4x3(mean, view_matrix);
@@ -555,7 +582,11 @@ __global__ void preprocesssphericalCUDA(
 	float* dL_dcov3D,
 	float* dL_dsh,
 	glm::vec3* dL_dscale,
-	glm::vec4* dL_drot)
+	glm::vec4* dL_drot,
+	const float* dL_dconics, // Add for OmniGS
+	const int Hight, // Add for OmniGS
+	const int Width  // Add for OmniGS
+	)
 {
 	auto idx = cg::this_grid().thread_rank();
 	if (idx >= P || !(radii[idx] > 0))
@@ -569,36 +600,41 @@ __global__ void preprocesssphericalCUDA(
 
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// from rendering procedure
+	// glm::vec3 dL_dmean;
+	// float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w = tx/tz
+	// float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom.y * m_w * m_w = ty/tz
+	// dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
+	// dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
+	// dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
+
+	// ******************
+	// Re-compute Jacobian for trial
+
+	// Fetch gradients, recompute 2D covariance and relevant 
+	// intermediate forward results needed in the backward.
+	float3 dL_dconic = { dL_dconics[4 * idx], dL_dconics[4 * idx + 1], dL_dconics[4 * idx + 3] };
+    float3 t = transformPoint4x3(m, view_matrix);
+    
+    // Useful veriables for spherical projection
+	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+	float tz2_mtx2 = t.z*t.z - t.z*t.z;
+	float tx2_ptz2 = t.x*t.x + t.z*t.z;
+
+    // Try Omni-GS Jacobian
+	glm::mat3 J = glm::mat3(
+		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1*(Width*t.z)/(M_PI*tx2_ptz2)*0.5f,
+		-1*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
+		0, 0, 0);
+	// ******************
+
+	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
+	// OmniGS version
 	glm::vec3 dL_dmean;
-	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w
-	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom.y * m_w * m_w
+	float mul1 = (proj[0] * m.x + proj[4] * m.y + proj[8] * m.z + proj[12]) * m_w * m_w; // m_hom.x * m_w * m_w = tx/tz
+	float mul2 = (proj[1] * m.x + proj[5] * m.y + proj[9] * m.z + proj[13]) * m_w * m_w; // m_hom.y * m_w * m_w = ty/tz
 	dL_dmean.x = (proj[0] * m_w - proj[3] * mul1) * dL_dmean2D[idx].x + (proj[1] * m_w - proj[3] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.y = (proj[4] * m_w - proj[7] * mul1) * dL_dmean2D[idx].x + (proj[5] * m_w - proj[7] * mul2) * dL_dmean2D[idx].y;
 	dL_dmean.z = (proj[8] * m_w - proj[11] * mul1) * dL_dmean2D[idx].x + (proj[9] * m_w - proj[11] * mul2) * dL_dmean2D[idx].y;
-
-	// printf("proj[0]: %f\n", proj[0]);
-	// printf("proj[1]: %f\n", proj[1]);
-	// printf("proj[2]: %f\n", proj[2]);
-	// printf("proj[3]: %f\n", proj[3]);
-	// printf("proj[4]: %f\n", proj[4]);
-	// printf("proj[5]: %f\n", proj[5]);
-	// printf("proj[6]: %f\n", proj[6]);
-	// printf("proj[7]: %f\n", proj[7]);
-	// printf("proj[8]: %f\n", proj[8]);
-	// printf("proj[9]: %f\n", proj[9]);
-	// printf("proj[10]: %f\n", proj[10]);
-	// printf("proj[11]: %f\n", proj[11]);
-	// printf("proj[12]: %f\n", proj[12]);
-	
-	// printf("m_hom.x: %f\n", m_hom.x);
-	// printf("m_hom.y: %f\n", m_hom.y);
-	// printf("m_hom.z: %f\n", m_hom.z);
-	// printf("m_hom.w: %f\n", m_hom.w);
-
-	printf("m_w: %f\n", m_w);
-
-	// printf("mul1: %f\n", mul1);
-	// printf("mul2: %f\n", mul2);
 
 	// That's the second part of the mean gradient. Previous computation
 	// of cov2D and following SH conversion also affects it.
@@ -905,7 +941,11 @@ void BACKWARD::preprocessspherical(
 		dL_dcov3D,
 		dL_dsh,
 		dL_dscale,
-		dL_drot);
+		dL_drot,
+		dL_conic // Add for OmniGS
+		H, // Add for OmniGS
+		W // Add for OmniGS
+		);
 }
 
 void BACKWARD::render(
