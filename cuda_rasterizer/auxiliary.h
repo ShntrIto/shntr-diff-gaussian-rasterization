@@ -110,10 +110,10 @@ __forceinline__ __device__ float3 point_to_equirect(
 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
 	float longitude = atan2f(direction_vector.x, direction_vector.z);
 	float latitude = asinf(direction_vector.y / direction_vector_length);
-	float normalized_latitude = 2 * latitude / M_PI;
-	float normalized_longitude = longitude / M_PI;
-	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
-	return p_view;
+	float screen_x = 2 * latitude / M_PI;
+	float screen_y = longitude / M_PI;
+	float3 p_screen = {screen_x, screen_y, direction_vector_length};
+	return p_screen;
 }
 
 
@@ -190,10 +190,10 @@ __forceinline__ __device__ bool in_sphere(int idx,
 	const float* projmatrix,
 	const glm::vec3* cam_pos,
 	bool prefiltered,
-	float3& p_view)
+	float3& p_screen)
 {
     float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
-	p_view = point_to_equirect(p_orig, viewmatrix);
+	p_screen = point_to_equirect(p_orig, viewmatrix);
 	// if (p_view.z <= 0.2f || p_view.z >= 100.0f)
 	// {
 	// 	if (prefiltered)

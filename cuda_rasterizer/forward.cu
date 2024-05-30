@@ -352,12 +352,12 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 	tiles_touched[idx] = 0;
 
 	// Perform near culling, quit if outside.
-	float3 p_view;
+	float3 p_screen;
 	if (!in_sphere(idx, orig_points, viewmatrix, projmatrix, cam_pos, prefiltered, p_view))
 		return;
 
 	// float3 p_proj = {p_view.x, p_view.y, 2.0 * (p_view.z - 0.2f) / (100.0f - 0.2f) - 1.0};
-	float3 p_screen = {p_view.x, p_view.y, p_view.z};
+	// float3 p_screen = {p_view.x, p_view.y, p_view.z};
 
 	// If 3D covariance matrix is precomputed, use it, otherwise compute
 	// from scaling and rotation parameters. 
@@ -398,7 +398,6 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
     if ((rect_max.x - rect_min.x) * (rect_max.y - rect_min.y) == 0)
         return;
 
-
 	// If colors have been precomputed, use them, otherwise convert
 	// spherical harmonics coefficients to RGB color.
 	if (colors_precomp == nullptr)
@@ -410,7 +409,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 	}
 
 	// Store some useful helper data for the next steps.
-	depths[idx] = p_view.z;
+	depths[idx] = p_screen.z;
 	radii[idx] = my_radius;
 	points_xy_image[idx] = point_image;
 	// Inverse 2D covariance and opacity neatly pack into one float4
