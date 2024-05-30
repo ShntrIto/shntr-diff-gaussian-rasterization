@@ -414,19 +414,19 @@ __global__ void computesphericalCov2DCUDA(int P,
 	
 	// Gradients of loss w.r.t. transformed Gaussian mean t
 	// OmniGS version
-	float dL_dtx =  -(W*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
+	float dL_dtx =  (-1*W*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
 					(W*tz2_mtx2)/(2*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
 					(H*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2*t.x*t.x*tr2 + (t.x*t.x)/tx2_ptz2 - 1)) * dL_dJ10 + 
 					(H*t.x*tr2)/M_PI * (1.f/sqrtf(tx2_ptz2) - (2*sqrtf(tx2_ptz2)/tr2)) * dL_dJ11 +
 					(H*t.x*t.y*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*tr2)/sqrtf(tx2_ptz2) + 1.f/tx2_ptz2) * dL_dJ12;
 	float dL_dty =  (H*t.x*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (2*t.y*t.y*tr2 - 1) * dL_dJ10 +
 					(-2*H*t.y*sqrtf(tx2_ptz2)*tr4)/M_PI * dL_dJ11 + 
-					-(H*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2*t.y*t.y*tr2) * dL_dJ12;
+					(-1*H*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2*t.y*t.y*tr2) * dL_dJ12;
 	float dL_dtz =  (W*tz2_mtx2)/(2*M_PI*(tx2_ptz2)) * dL_dJ00 +
 					(W*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
 					(H*t.x*t.y*t.z*tr2)/(M_PI*sqrt(tx2_ptz2)) * (2.f*tr2+1.f/tx2_ptz2) * dL_dJ10 +
 					(H*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1-2*tx2_ptz2*tr2) * dL_dJ11 +
-					-(H*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1-2*t.z*t.z*tr2+t.z*t.z/tx2_ptz2) * dL_dJ12;
+					(-1*H*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1-2*t.z*t.z*tr2+t.z*t.z/tx2_ptz2) * dL_dJ12;
 
 	// Account for transformation of mean to t
 	// t = transformPoint4x3(mean, view_matrix);
