@@ -109,7 +109,7 @@ __forceinline__ __device__ float3 point_to_equirect(
 	float3 direction_vector = transformPoint4x3(p_orig, viewmatrix);
 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
 	float longitude = atan2f(direction_vector.x, direction_vector.z);
-	float latitude = asinf(direction_vector.y / direction_vector);
+	float latitude = asinf(direction_vector.y / direction_vector_length);
 	float normalized_latitude = 2 * latitude / M_PI;
 	float normalized_longitude = longitude / M_PI;
 	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
