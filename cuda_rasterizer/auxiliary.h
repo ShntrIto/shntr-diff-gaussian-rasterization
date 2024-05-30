@@ -43,8 +43,8 @@ __forceinline__ __device__ float ndc2Pix(float v, int S)
 	return ((v + 1.0) * S - 1.0) * 0.5;
 }
 
-// use ndc2Pix_spherical for rendering ERP image
-__forceinline__ __device__ float ndc2Pix_spherical(float v, int S)
+// use n2p_spherical for rendering ERP image
+__forceinline__ __device__ float s2p_spherical(float v, int S)
 {
 	return ((v + 1.0) * S ) * 0.5;
 }
@@ -109,8 +109,8 @@ __forceinline__ __device__ float3 point_to_equirect(
 	float3 direction_vector = transformPoint4x3(p_orig, viewmatrix);
 	float direction_vector_length = sqrtf(direction_vector.x * direction_vector.x + direction_vector.y * direction_vector.y + direction_vector.z * direction_vector.z);
 	float longitude = atan2f(direction_vector.x, direction_vector.z);
-	float latitude = atan2f(direction_vector.y , sqrtf(direction_vector.x * direction_vector.x + direction_vector.z * direction_vector.z));
-	float normalized_latitude = latitude / (M_PI / 2.0f);
+	float latitude = asinf(direction_vector.y / direction_vector);
+	float normalized_latitude = 2 * latitude / M_PI;
 	float normalized_longitude = longitude / M_PI;
 	float3 p_view = {normalized_longitude, normalized_latitude, direction_vector_length};
 	return p_view;
@@ -194,15 +194,15 @@ __forceinline__ __device__ bool in_sphere(int idx,
 {
     float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
 	p_view = point_to_equirect(p_orig, viewmatrix);
-	if (p_view.z <= 0.2f || p_view.z >= 100.0f)
-	{
-		if (prefiltered)
-		{
-			printf("Point is filtered although prefiltered is set. This shouldn't happen!");
-			__trap();
-		}
-		return false;
-	}
+	// if (p_view.z <= 0.2f || p_view.z >= 100.0f)
+	// {
+	// 	if (prefiltered)
+	// 	{
+	// 		printf("Point is filtered although prefiltered is set. This shouldn't happen!");
+	// 		__trap();
+	// 	}
+	// 	return false;
+	// }
 	return true;
 }
 

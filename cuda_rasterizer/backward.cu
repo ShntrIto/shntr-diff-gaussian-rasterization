@@ -710,7 +710,7 @@ renderCUDA(
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
-	const float ddelx_dx = 0.5 * W; // dp_ds
+	const float ddelx_dx = 0.5 * W; 
 	const float ddely_dy = 0.5 * H;
 
 	// Traverse all Gaussians
