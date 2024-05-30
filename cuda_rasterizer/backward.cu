@@ -940,7 +940,7 @@ void BACKWARD::preprocessspherical(
 		dL_dsh,
 		dL_dscale,
 		dL_drot,
-		dL_conic, // Add for OmniGS
+		dL_dconic, // Add for OmniGS
 		H, // Add for OmniGS
 		W // Add for OmniGS
 		);
