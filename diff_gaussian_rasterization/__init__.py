@@ -80,22 +80,10 @@ class _RasterizeGaussians(torch.autograd.Function):
         )
 
         # Invoke C++/CUDA rasterizer
-        if raster_settings.debug:
-            cpu_args = cpu_deep_copy_tuple(args) # Copy them before they can be corrupted
-            try:
-                if raster_settings.spherical:
-                    num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args)
-                else:
-                    num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args)
-            except Exception as ex:
-                torch.save(cpu_args, "snapshot_fw.dump")
-                print("\nAn error occured in forward. Please forward snapshot_fw.dump for debugging.")
-                raise ex
+        if raster_settings.spherical:
+            num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args)
         else:
-            if raster_settings.spherical:
-                num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args)
-            else:
-                num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args)
+            num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args)
 
         # Keep relevant tensors for backward
         ctx.raster_settings = raster_settings
@@ -135,22 +123,10 @@ class _RasterizeGaussians(torch.autograd.Function):
                 raster_settings.debug)
 
         # Compute gradients for relevant tensors by invoking backward method
-        if raster_settings.debug:
-            cpu_args = cpu_deep_copy_tuple(args) # Copy them before they can be corrupted
-            try:
-                if raster_settings.spherical:
-                    grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
-                else:
-                    grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
-            except Exception as ex:
-                torch.save(cpu_args, "snapshot_bw.dump")
-                print("\nAn error occured in backward. Writing snapshot_bw.dump for debugging.\n")
-                raise ex
+        if raster_settings.spherical:
+            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
         else:
-            if raster_settings.spherical:
-                grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
-            else:
-                grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
+            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
 
         grads = (
             grad_means3D,
