@@ -354,7 +354,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 
 	// Perform near culling, quit if outside.
 	float3 p_screen;
-	point_to_equirect(idx, p_orig, viewmatrix, p_screen)
+	point_to_equirect(idx, p_orig, viewmatrix, p_screen);
 	// if (!in_sphere(idx, orig_points, viewmatrix, p_screen))
 	// 	return;
 
