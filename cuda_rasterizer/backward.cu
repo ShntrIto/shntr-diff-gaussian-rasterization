@@ -305,7 +305,7 @@ __global__ void computesphericalCov2DCUDA(int P,
     // Useful veriables for spherical projection
 	// float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tz2_mtx2 = t.z*t.z - t.z*t.z;
+	float tz2_mtx2 = t.x*t.x - t.z*t.z;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
@@ -595,8 +595,8 @@ __global__ void preprocesssphericalCUDA(
 	float3 m = means[idx];
 
 	// Taking care of gradients from the screenspace points
-	float4 m_hom = transformPoint4x4(m, proj);
-	float m_w = 1.0f / (m_hom.w + 0.0000001f);
+	// float4 m_hom = transformPoint4x4(m, proj);
+	// float m_w = 1.0f / (m_hom.w + 0.0000001f);
 
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// from rendering procedure
@@ -617,7 +617,7 @@ __global__ void preprocesssphericalCUDA(
     
     // Useful veriables for spherical projection
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tz2_mtx2 = t.z*t.z - t.z*t.z;
+	float tz2_mtx2 = t.x*t.x - t.z*t.z;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
