@@ -147,6 +147,7 @@ __device__ float3 computesphericalCov2D(
 	// 	0.0f, focal_x / t_unit_focal.z, -(focal_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
 	// 	0, 0, 0);
 
+	// R^T
     glm::mat3 W = glm::mat3(
         viewmatrix[0], viewmatrix[4], viewmatrix[8],
         viewmatrix[1], viewmatrix[5], viewmatrix[9],
@@ -353,8 +354,10 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 
 	// Perform near culling, quit if outside.
 	float3 p_screen;
-	if (!in_sphere(idx, orig_points, viewmatrix, projmatrix, cam_pos, prefiltered, p_screen))
-		return;
+	point_to_equirect(idx, p_orig, viewmatrix, p_screen)
+	// if (!in_sphere(idx, orig_points, viewmatrix, p_screen))
+	// 	return;
+
 
 	// float3 p_proj = {p_view.x, p_view.y, 2.0 * (p_view.z - 0.2f) / (100.0f - 0.2f) - 1.0};
 	// float3 p_screen = {p_view.x, p_view.y, p_view.z};

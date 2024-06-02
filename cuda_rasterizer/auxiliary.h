@@ -102,11 +102,25 @@ __forceinline__ __device__ float3 transformVec4x3Transpose(const float3& p, cons
 	return transformed;
 }
 
-__forceinline__ __device__ float3 point_to_equirect(
-	float3 p_orig,
-	const float* viewmatrix)
+// __forceinline__ __device__ float3 point_to_equirect(
+// 	float3 p_orig,
+// 	const float* viewmatrix)
+// {
+// 	float3 view_pos = transformPoint4x3(p_orig, viewmatrix);
+// 	float view_pos_length = sqrtf(view_pos.x * view_pos.x + view_pos.y * view_pos.y + view_pos.z * view_pos.z);
+// 	float longitude = atan2f(view_pos.x, view_pos.z);
+// 	float latitude = asinf(-1.f*view_pos.y / view_pos_length);
+// 	float screen_x = longitude / M_PI;
+// 	float screen_y = -2 * latitude / M_PI;
+// 	float3 p_screen = {screen_x, screen_y, view_pos_length};
+// 	return p_screen;
+// }
+__forceinline__ __device__ float3 point_to_equirect(int idx,
+	float3& p_orig,
+	const float* viewmatrix,
+	float3& p_screen)
 {
-	float3 view_pos = transformPoint4x3(p_orig, viewmatrix);
+	float3 view_pos = transformPoint4x3(orig_points, viewmatrix);
 	float view_pos_length = sqrtf(view_pos.x * view_pos.x + view_pos.y * view_pos.y + view_pos.z * view_pos.z);
 	float longitude = atan2f(view_pos.x, view_pos.z);
 	float latitude = asinf(-1.f*view_pos.y / view_pos_length);
@@ -184,27 +198,15 @@ __forceinline__ __device__ bool in_frustum(int idx,
 	return true;
 }
 
-__forceinline__ __device__ bool in_sphere(int idx,
-	const float* orig_points,
-	const float* viewmatrix,
-	const float* projmatrix,
-	const glm::vec3* cam_pos,
-	bool prefiltered,
-	float3& p_screen)
-{
-    float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
-	p_screen = point_to_equirect(p_orig, viewmatrix);
-	// if (p_view.z <= 0.2f || p_view.z >= 100.0f)
-	// {
-	// 	if (prefiltered)
-	// 	{
-	// 		printf("Point is filtered although prefiltered is set. This shouldn't happen!");
-	// 		__trap();
-	// 	}
-	// 	return false;
-	// }
-	return true;
-}
+// __forceinline__ __device__ bool in_sphere(int idx,
+// 	const float* orig_points,
+// 	const float* viewmatrix,
+// 	float3& p_screen)
+// {
+//     float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
+// 	p_screen = point_to_equirect(p_orig, viewmatrix);
+// 	return true;
+// }
 
 #define CHECK_CUDA(A, debug) \
 A; if(debug) { \
