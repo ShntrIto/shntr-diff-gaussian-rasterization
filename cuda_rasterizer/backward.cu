@@ -305,7 +305,7 @@ __global__ void computesphericalCov2DCUDA(int P,
     // Useful veriables for spherical projection
 	// float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tz2_mtx2 = t.x*t.x - t.z*t.z;
+	float tz2_mtx2 = t.z*t.z - t.x*t.x;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
