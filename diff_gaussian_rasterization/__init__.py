@@ -39,7 +39,7 @@ def rasterize_gaussians(
         rotations,
         cov3Ds_precomp,
         raster_settings,
-    )
+    ) # apply は，自作の順伝播・逆伝播を使った自動微分に必要
 
 class _RasterizeGaussians(torch.autograd.Function):
     @staticmethod

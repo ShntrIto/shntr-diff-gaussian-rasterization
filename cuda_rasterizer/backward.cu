@@ -305,7 +305,7 @@ __global__ void computesphericalCov2DCUDA(int P,
     // Useful veriables for spherical projection
 	// float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tz2_mtx2 = t.z*t.z - t.x*t.x;
+	float tx2_mtz2 = t.z*t.z - t.x*t.x;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
@@ -415,14 +415,14 @@ __global__ void computesphericalCov2DCUDA(int P,
 	// Gradients of loss w.r.t. transformed Gaussian mean t
 	// OmniGS version
 	float dL_dtx =  (-1.f*Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
-					(Width*tz2_mtx2)/(2.f*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
+					(Width*tx2_mtz2)/(2.f*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
 					(Hight*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*t.x*t.x*tr2 + (t.x*t.x)/tx2_ptz2 - 1.f)) * dL_dJ10 + 
 					(Hight*t.x*tr2)/M_PI * (1.f/sqrtf(tx2_ptz2) - (2.f*sqrtf(tx2_ptz2)/tr2)) * dL_dJ11 +
 					(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*tr2)/sqrtf(tx2_ptz2) + 1.f/tx2_ptz2) * dL_dJ12;
 	float dL_dty =  (Hight*t.x*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (2.f*t.y*t.y*tr2 - 1.f) * dL_dJ10 +
 					(-2.f*Hight*t.y*sqrtf(tx2_ptz2)*tr4)/M_PI * dL_dJ11 + 
 					(-1.f*Hight*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2.f*t.y*t.y*tr2) * dL_dJ12;
-	float dL_dtz =  (Width*tz2_mtx2)/(2.f*M_PI*(tx2_ptz2)) * dL_dJ00 +
+	float dL_dtz =  (Width*tx2_mtz2)/(2.f*M_PI*(tx2_ptz2)) * dL_dJ00 +
 					(Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
 					(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrt(tx2_ptz2)) * (2.f*tr2+1.f/tx2_ptz2) * dL_dJ10 +
 					(Hight*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1.f-2.f*tx2_ptz2*tr2) * dL_dJ11 +
@@ -617,7 +617,6 @@ __global__ void preprocesssphericalCUDA(
     
     // Useful veriables for spherical projection
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tz2_mtx2 = t.x*t.x - t.z*t.z;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // Try Omni-GS Jacobian
@@ -710,8 +709,14 @@ renderCUDA(
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
-	const float ddelx_dx = 0.5 * W; 
-	const float ddely_dy = 0.5 * H;
+	// const float ddelx_dx = 0.5 * W; 
+	// const float ddely_dy = 0.5 * H;
+	
+	// Gradient of pixel coordinate w.r.t. omnidirectional
+	// screen-space viewport coordinates
+	// (-pi to pi for horizontal, -pi/2 to pi/2 for vertical)
+	const float ddelx_dx = W / (2 * M_PI); 
+	const float ddely_dy = H / M_PI;
 
 	// Traverse all Gaussians
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
@@ -796,7 +801,7 @@ renderCUDA(
 
 			// Update gradients w.r.t. 2D mean position of the Gaussian
 			atomicAdd(&dL_dmean2D[global_id].x, dL_dG * dG_ddelx * ddelx_dx);
-			atomicAdd(&dL_dmean2D[global_id].y, dL_dG * dG_ddely * ddely_dy);
+			atomicAdd(&dL_dmean2D[global_id].y, dL_dG * dG_ddely * ddely_dy); 
 
 			// Update gradients w.r.t. 2D covariance (2x2 matrix, symmetric)
 			atomicAdd(&dL_dconic2D[global_id].x, -0.5f * gdx * d.x * dL_dG);
