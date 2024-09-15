@@ -310,7 +310,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 
     // Try Omni-GS Jacobian
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1.f*(Width*t.z)/(M_PI*tx2_ptz2)*0.5f,
+		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1.f*(Width*t.x)/(M_PI*tx2_ptz2)*0.5f,
 		-1.f*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1.f*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
 		0.0f, 0.0f, 0.0f);
 	
@@ -621,9 +621,9 @@ __global__ void preprocesssphericalCUDA(
 
     // Try Omni-GS Jacobian
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1*(Width*t.z)/(M_PI*tx2_ptz2)*0.5f,
-		-1*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
-		0, 0, 0);
+		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1.f*(Width*t.x)/(M_PI*tx2_ptz2)*0.5f,
+		-1.f*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1.f*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
+		0.0f, 0.0f, 0.0f);
 	// ******************
 
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
