@@ -123,9 +123,9 @@ __forceinline__ __device__ float3 point_to_equirect(int idx,
 	float3 view_pos = transformPoint4x3(p_orig, viewmatrix);
 	float view_pos_length = sqrtf(view_pos.x * view_pos.x + view_pos.y * view_pos.y + view_pos.z * view_pos.z);
 	float longitude = atan2f(view_pos.x, view_pos.z);
-	float latitude = asinf(-1.f*view_pos.y / view_pos_length);
+	float latitude = asinf(view_pos.y / view_pos_length);
 	float screen_x = longitude / M_PI;
-	float screen_y = -2 * latitude / M_PI;
+	float screen_y = 2 * latitude / M_PI;
 	p_screen = {screen_x, screen_y, view_pos_length};
 	return p_screen;
 }
