@@ -98,10 +98,12 @@ namespace CudaRasterizer
 			char* binning_buffer,
 			char* image_buffer,
 			const float* dL_dpix,
+			const float* dL_ddpix, // depth
 			float* dL_dmean2D,
 			float* dL_dconic,
 			float* dL_dopacity,
 			float* dL_dcolor,
+			float* dL_ddepth, // depth
 			float* dL_dmean3D,
 			float* dL_dcov3D,
 			float* dL_dsh,
@@ -129,10 +131,12 @@ namespace CudaRasterizer
 			char* binning_buffer,
 			char* image_buffer,
 			const float* dL_dpix,
+			const float* dL_ddpix, // depth
 			float* dL_dmean2D,
 			float* dL_dconic,
 			float* dL_dopacity,
 			float* dL_dcolor,
+			float* dL_ddepth, // depth
 			float* dL_dmean3D,
 			float* dL_dcov3D,
 			float* dL_dsh,
