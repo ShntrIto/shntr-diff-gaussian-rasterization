@@ -665,7 +665,7 @@ renderCUDA(
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
-	float* __restrict__ dL_dcolors
+	float* __restrict__ dL_dcolors,
 	float* __restrict__ dL_ddepths)
 {
 	// デプスに関する誤差逆伝播の正しい計算が分からないため，デプスの微分値は伝播しない
