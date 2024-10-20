@@ -92,7 +92,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         return color, radii, depth # depth
 
     @staticmethod
-    def backward(ctx, grad_out_color, _):
+    def backward(ctx, grad_out_color, _, grad_out_depth): # depth
 
         # Restore necessary values from context
         num_rendered = ctx.num_rendered
@@ -112,7 +112,8 @@ class _RasterizeGaussians(torch.autograd.Function):
                 raster_settings.projmatrix, 
                 raster_settings.tanfovx, 
                 raster_settings.tanfovy, 
-                grad_out_color, 
+                grad_out_color,
+                grad_out_depth, # depth
                 sh, 
                 raster_settings.sh_degree, 
                 raster_settings.campos,
@@ -123,16 +124,17 @@ class _RasterizeGaussians(torch.autograd.Function):
                 raster_settings.debug)
 
         # Compute gradients for relevant tensors by invoking backward method
-        if raster_settings.spherical:
-            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
-        else:
-            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
+        if raster_settings.spherical: # depth
+            grad_means2D, grad_colors_precomp, grad_depths_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
+        else: # depth
+            grad_means2D, grad_colors_precomp, grad_depths_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
 
         grads = (
             grad_means3D,
             grad_means2D,
             grad_sh,
             grad_colors_precomp,
+            grad_depths_precomp, # depth
             grad_opacities,
             grad_scales,
             grad_rotations,
