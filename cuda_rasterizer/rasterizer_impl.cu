@@ -359,6 +359,7 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 	const float tan_fovx, float tan_fovy,
 	const bool prefiltered,
 	float* out_color,
+	float* out_depth, // depth
 	int* radii,
 	bool debug)
 {
@@ -464,6 +465,9 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 
 	// Let each tile blend its range of Gaussians independently in parallel
 	const float* feature_ptr = colors_precomp != nullptr ? colors_precomp : geomState.rgb;
+	// depth only for forward (BACKWARD PROPAGATION IS NOT IMPLEMENTED)
+	const float* depth_ptr = geomState.depths;
+	// norm probably can be calculated from cov3D...
 	CHECK_CUDA(FORWARD::render(
 		tile_grid, block,
 		imgState.ranges,
@@ -471,11 +475,13 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 		width, height,
 		geomState.means2D,
 		feature_ptr,
+		depth_ptr, // depth
 		geomState.conic_opacity,
 		imgState.accum_alpha,
 		imgState.n_contrib,
 		background,
-		out_color), debug)
+		out_color,
+		out_depth), debug) // depth
 
 	return num_rendered;
 }
