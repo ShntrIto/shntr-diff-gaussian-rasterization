@@ -703,15 +703,17 @@ renderCUDA(
 	const int last_contributor = inside ? n_contrib[pix_id] : 0;
 
 	float accum_rec[C] = { 0 };
+	float accum_recd[1] = { 0 }; // depth
 	float dL_dpixel[C];
 	float dL_ddepth[1]; // depth
 	if (inside)
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-		dL_ddepth = dL_ddpixels[pix_id]; // depth
+		dL_ddepth[0] = dL_ddpixels[pix_id]; // depth
 
 	float last_alpha = 0;
 	float last_color[C] = { 0 };
+	float last_depth[1] = { 0 }; // depth
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
@@ -788,11 +790,11 @@ renderCUDA(
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * dL_dchannel);
 			}
 
-			const float d - collected_depths[j]; // depth
-			accum_recd = last_alpha * last_depth + (1.f - last_alpha) * accum_recd;
-			last_depth = d;
-			const float dL_ddchannel = dL_ddepth;
-			dL_dalpha += (d - accum_recd) * dL_ddchannel;
+			const float d = collected_depths[j]; // depth
+			accum_recd[0] = last_alpha * last_depth[0] + (1.f - last_alpha) * accum_recd[0];
+			last_depth[0] = d;
+			const float dL_ddchannel = dL_ddepth[0];
+			dL_dalpha += (d - accum_recd[0]) * dL_ddchannel;
 			atomicAdd(&(dL_ddepths[global_id]), dchannel_ddepth * dL_ddchannel); // depths
 			
 			dL_dalpha *= T;
