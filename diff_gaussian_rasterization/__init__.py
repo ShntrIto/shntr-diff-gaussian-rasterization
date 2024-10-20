@@ -83,7 +83,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         if raster_settings.spherical:
             num_rendered, color, depth, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args) # detph
         else:
-            num_rendered, color, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args)
+            num_rendered, color, depth, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args) # depth
 
         # Keep relevant tensors for backward
         ctx.raster_settings = raster_settings
