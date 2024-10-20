@@ -690,6 +690,7 @@ renderCUDA(
 	__shared__ float2 collected_xy[BLOCK_SIZE];
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
 	__shared__ float collected_colors[C * BLOCK_SIZE];
+	__shared__ float collected_depths[BLOCK_SIZE]; // depth
 
 	// In the forward, we stored the final value for T, the
 	// product of all (1 - alpha) factors. 
@@ -707,7 +708,7 @@ renderCUDA(
 	if (inside)
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-		dL_ddepth[0] = dL_ddpixels[pix_id]; // depth
+		dL_ddepth = dL_ddpixels[pix_id]; // depth
 
 	float last_alpha = 0;
 	float last_color[C] = { 0 };
@@ -780,14 +781,20 @@ renderCUDA(
 				last_color[ch] = c;
 
 				const float dL_dchannel = dL_dpixel[ch];
-				const float dL_d = dL_ddepth[0]; // depth
 				dL_dalpha += (c - accum_rec[ch]) * dL_dchannel;
 				// Update the gradients w.r.t. color of the Gaussian. 
 				// Atomic, since this pixel is just one of potentially
 				// many that were affected by this Gaussian.
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * dL_dchannel);
-				atomicAdd(&(dL_ddepths[global_id]), dL_ddepth[0]); // depths
 			}
+
+			const float d - collected_depths[j]; // depth
+			accum_recd = last_alpha * last_depth + (1.f - last_alpha) * accum_recd;
+			last_depth = d;
+			const float dL_ddchannel = dL_ddepth;
+			dL_dalpha += (d - accum_recd) * dL_ddchannel;
+			atomicAdd(&(dL_ddepths[global_id]), dchannel_ddepth * dL_ddchannel); // depths
+			
 			dL_dalpha *= T;
 			// Update last alpha (to be used in the next iteration)
 			last_alpha = alpha;

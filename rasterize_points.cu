@@ -362,7 +362,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	  dL_dconic.contiguous().data<float>(),  
 	  dL_dopacity.contiguous().data<float>(),
 	  dL_dcolors.contiguous().data<float>(),
-	  dL_ddepths.contiguous().data<float>(),
+	  dL_ddepths.contiguous().data<float>(), // depth
 	  dL_dmeans3D.contiguous().data<float>(),
 	  dL_dcov3D.contiguous().data<float>(),
 	  dL_dsh.contiguous().data<float>(),
