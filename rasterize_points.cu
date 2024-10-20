@@ -66,6 +66,7 @@ RasterizeGaussiansCUDA(
   auto float_opts = means3D.options().dtype(torch::kFloat32);
 
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
+  torch::Tensor out_depth = torch::full({1, H, W}, 0.0, float_opts); // depth
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
   
   torch::Device device(torch::kCUDA);
@@ -108,10 +109,11 @@ RasterizeGaussiansCUDA(
 		tan_fovy,
 		prefiltered,
 		out_color.contiguous().data<float>(),
+		out_depth.contiguous().data<float>(), // depth
 		radii.contiguous().data<int>(),
 		debug);
   }
-  return std::make_tuple(rendered, out_color, radii, geomBuffer, binningBuffer, imgBuffer);
+  return std::make_tuple(rendered, out_color, radii, out_depth, geomBuffer, binningBuffer, imgBuffer); // depth
 }
 
 std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
