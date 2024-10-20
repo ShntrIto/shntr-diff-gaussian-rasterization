@@ -658,6 +658,7 @@ renderCUDA(
 	const float2* __restrict__ points_xy_image,
 	const float4* __restrict__ conic_opacity,
 	const float* __restrict__ colors,
+	const float* __restrict__ depths, // depth
 	const float* __restrict__ final_Ts,
 	const uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ dL_dpixels,
@@ -668,7 +669,6 @@ renderCUDA(
 	float* __restrict__ dL_dcolors,
 	float* __restrict__ dL_ddepths)
 {
-	// デプスに関する誤差逆伝播の正しい計算が分からないため，デプスの微分値は伝播しない
 	// We rasterize again. Compute necessary block info.
 	auto block = cg::this_thread_block();
 	const uint32_t horizontal_blocks = (W + BLOCK_X - 1) / BLOCK_X;
@@ -739,6 +739,7 @@ renderCUDA(
 			collected_id[block.thread_rank()] = coll_id;
 			collected_xy[block.thread_rank()] = points_xy_image[coll_id];
 			collected_conic_opacity[block.thread_rank()] = conic_opacity[coll_id];
+			collected_depths[block.thread_rank()] = depths[coll_id]; // depth
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
 		}
@@ -977,6 +978,7 @@ void BACKWARD::render(
 	const float2* means2D,
 	const float4* conic_opacity,
 	const float* colors,
+	const float* depths, // depths
 	const float* final_Ts,
 	const uint32_t* n_contrib,
 	const float* dL_dpixels,
@@ -995,6 +997,7 @@ void BACKWARD::render(
 		means2D,
 		conic_opacity,
 		colors,
+		depths, //depths
 		final_Ts,
 		n_contrib,
 		dL_dpixels,

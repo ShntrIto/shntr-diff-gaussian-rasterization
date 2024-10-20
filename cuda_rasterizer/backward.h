@@ -29,6 +29,7 @@ namespace BACKWARD
 		const float2* means2D,
 		const float4* conic_opacity,
 		const float* colors,
+		const float* depths,
 		const float* final_Ts,
 		const uint32_t* n_contrib,
 		const float* dL_dpixels,
