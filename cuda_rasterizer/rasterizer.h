@@ -50,6 +50,7 @@ namespace CudaRasterizer
 			const bool prefiltered,
 			float* out_color,
 			float* out_depth, // depth
+			float* out_lf, // likelihood
 			int* radii = nullptr,
 			bool debug = false);
 
@@ -75,6 +76,7 @@ namespace CudaRasterizer
 			const bool prefiltered,
 			float* out_color,
 			float* out_depth, // depth
+			float* out_lf, // likelihood
 			int* radii = nullptr,
 			bool debug = false);
 
