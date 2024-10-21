@@ -81,18 +81,18 @@ class _RasterizeGaussians(torch.autograd.Function):
 
         # Invoke C++/CUDA rasterizer
         if raster_settings.spherical:
-            num_rendered, color, depth, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args) # detph
+            num_rendered, color, depth, radii, lf, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args) # detph, likelihood
         else:
-            num_rendered, color, depth, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args) # depth
+            num_rendered, color, depth, radii, lf, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args) # depth, likelihood
 
         # Keep relevant tensors for backward
         ctx.raster_settings = raster_settings
         ctx.num_rendered = num_rendered
         ctx.save_for_backward(colors_precomp, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer)
-        return color, radii, depth # depth
+        return color, radii, depth, lf # depth, likelihood
 
     @staticmethod
-    def backward(ctx, grad_out_color, _, grad_out_depth): # depth
+    def backward(ctx, grad_out_color, _, grad_out_depth, grad_out_lf): # depth
 
         # Restore necessary values from context
         num_rendered = ctx.num_rendered

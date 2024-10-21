@@ -33,7 +33,8 @@ std::function<char*(size_t N)> resizeFunctional(torch::Tensor& t) {
 }
 
 // std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> // depth
-std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+// std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> // likelihood
 RasterizeGaussiansCUDA(
 	const torch::Tensor& background,
 	const torch::Tensor& means3D,
@@ -68,6 +69,7 @@ RasterizeGaussiansCUDA(
 
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor out_depth = torch::full({1, H, W}, 0.0, float_opts); // depth
+  torch::Tensor out_lf = torch::full({1, H, W}, 0.0, float_opts); // likelihood
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
   
   torch::Device device(torch::kCUDA);
@@ -111,14 +113,16 @@ RasterizeGaussiansCUDA(
 		prefiltered,
 		out_color.contiguous().data<float>(),
 		out_depth.contiguous().data<float>(), // depth
+		out_lf.contiguous().data<float>(), // likelihood
 		radii.contiguous().data<int>(),
 		debug);
   }
-  return std::make_tuple(rendered, out_color, out_depth, radii, geomBuffer, binningBuffer, imgBuffer); // depth
+  return std::make_tuple(rendered, out_color, out_depth, out_lf, radii, geomBuffer, binningBuffer, imgBuffer); // depth, likelihood
 }
 
 // std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> //depth
-std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+// std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> // likelihood 
 RasterizeGaussiansSphericalCUDA(
 	const torch::Tensor& background,
 	const torch::Tensor& means3D,
@@ -153,6 +157,7 @@ RasterizeGaussiansSphericalCUDA(
 
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor out_depth = torch::full({1, H, W}, 0.0, float_opts); // depths
+  torch::Tensor out_lf = torch::full({1, H, W}, 0.0, float_opts); // likelihood
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
   
   torch::Device device(torch::kCUDA);
@@ -196,10 +201,11 @@ RasterizeGaussiansSphericalCUDA(
 		prefiltered,
 		out_color.contiguous().data<float>(),
 		out_depth.contiguous().data<float>(), // depth
+		out_lf.contiguous().data<float>(), // likelihood
 		radii.contiguous().data<int>(),
 		debug);
   }
-  return std::make_tuple(rendered, out_color, out_depth, radii, geomBuffer, binningBuffer, imgBuffer); // depth
+  return std::make_tuple(rendered, out_color, out_depth, out_lf, radii, geomBuffer, binningBuffer, imgBuffer); // depth, likelihood
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>

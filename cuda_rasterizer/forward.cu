@@ -415,7 +415,8 @@ renderCUDA(
 	uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ bg_color,
 	float* __restrict__ out_color,
-	float* __restrict__ out_depth) // depths
+	float* __restrict__ out_depth,
+	float* __restrict__ out_lf) // depths
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -501,6 +502,7 @@ renderCUDA(
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
 			
 			D[0] += depths[collected_id[j]] * alpha * T; // depth
+			LF[0] += (depths[collected_id[j]] / depths[collected_id[j]]) * alpha * T; // likelihood
 
 			T = test_T;
 
@@ -519,6 +521,7 @@ renderCUDA(
 		for (int ch = 0; ch < CHANNELS; ch++)
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
 		out_depth[pix_id] = D[0]; // depth
+		out_lf[pix_id] = LF[0]; // likelihood
 	}
 }
 
@@ -535,7 +538,9 @@ void FORWARD::render(
 	uint32_t* n_contrib,
 	const float* bg_color,
 	float* out_color,
-	float* out_depth) // depth
+	float* out_depth, // depth
+	float* out_lf // likelihood
+	)
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
 		ranges,
@@ -549,7 +554,9 @@ void FORWARD::render(
 		n_contrib,
 		bg_color,
 		out_color,
-		out_depth); // depth
+		out_depth, // depth 
+		out_lf // likelihood
+		); 
 }
 
 void FORWARD::preprocess(int P, int D, int M,

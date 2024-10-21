@@ -217,6 +217,7 @@ int CudaRasterizer::Rasterizer::forward(
 	const bool prefiltered,
 	float* out_color,
 	float* out_depth, // depth
+	float* out_lf, // likelihood
 	int* radii,
 	bool debug)
 {
@@ -336,7 +337,9 @@ int CudaRasterizer::Rasterizer::forward(
 		imgState.n_contrib,
 		background,
 		out_color,
-		out_depth), debug) // depth
+		out_depth, // depth
+		out_lf // likelihood
+		), debug) 
 
 	return num_rendered;
 }
@@ -366,6 +369,7 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 	const bool prefiltered,
 	float* out_color,
 	float* out_depth, // depth
+	float* out_lf, // likelihood
 	int* radii,
 	bool debug)
 {
@@ -487,7 +491,9 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 		imgState.n_contrib,
 		background,
 		out_color,
-		out_depth), debug) // depth
+		out_depth, // depth
+		out_lf // likelihood
+		), debug) 
 
 	return num_rendered;
 }
