@@ -93,6 +93,7 @@ class _RasterizeGaussians(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_out_color, _, grad_out_depth, grad_out_lf): # depth
+        # grad_out_lf は逆伝播しない
 
         # Restore necessary values from context
         num_rendered = ctx.num_rendered
