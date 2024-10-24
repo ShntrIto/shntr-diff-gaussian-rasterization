@@ -202,9 +202,9 @@ RasterizeGaussiansSphericalCUDA(
 		tan_fovy,
 		prefiltered,
 		out_color.contiguous().data<float>(),
+		radii.contiguous().data<int>(),
 		out_all_modal.contiguous().data<float>(), // modalities
 		out_plane_depth.contiguous().data<float>(), // modalities
-		radii.contiguous().data<int>(),
 		debug);
   }
   return std::make_tuple(rendered, out_color, radii, out_all_modal, out_plane_depth, geomBuffer, binningBuffer, imgBuffer);
@@ -299,6 +299,7 @@ RasterizeGaussiansSphericalCUDA(
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
  RasterizeGaussiansBackwardSphericalCUDA(
  	const torch::Tensor& background,
+	const torch::Tensor& all_modal_pixels, // modalities
 	const torch::Tensor& means3D,
 	const torch::Tensor& radii,
     const torch::Tensor& colors,

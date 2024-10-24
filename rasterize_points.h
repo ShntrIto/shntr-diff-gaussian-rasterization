@@ -92,6 +92,7 @@ RasterizeGaussiansSphericalCUDA(
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
  RasterizeGaussiansBackwardSphericalCUDA(
  	const torch::Tensor& background,
+	const torch::Tensor& all_map_pixels, // modalities
 	const torch::Tensor& means3D,
 	const torch::Tensor& radii,
     const torch::Tensor& colors,

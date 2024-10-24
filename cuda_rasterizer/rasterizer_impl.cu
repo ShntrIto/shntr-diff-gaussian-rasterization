@@ -660,7 +660,6 @@ void CudaRasterizer::Rasterizer::backwardspherical(
 	// opacity and RGB of Gaussians from per-pixel loss gradients.
 	// If we were given precomputed colors and not SHs, use them.
 	const float* color_ptr = (colors_precomp != nullptr) ? colors_precomp : geomState.rgb;
-	const float* depth_ptr = geomState.depths;
 	CHECK_CUDA(BACKWARD::render(
 		tile_grid,
 		block,
