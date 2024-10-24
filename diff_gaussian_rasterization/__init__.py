@@ -183,7 +183,7 @@ class GaussianRasterizer(nn.Module):
             
         return visible
 
-    def forward(self, means3D, means2D, opacities, shs = None, colors_precomp = None, scales = None, rotations = None, cov3D_precomp = None):
+    def forward(self, means3D, means2D, opacities, shs = None, colors_precomp = None, scales = None, rotations = None, cov3D_precomp = None, all_modal = None): # modal
         
         raster_settings = self.raster_settings
 
@@ -204,7 +204,8 @@ class GaussianRasterizer(nn.Module):
             rotations = torch.Tensor([])
         if cov3D_precomp is None:
             cov3D_precomp = torch.Tensor([])
-
+        if all_modal is None:
+            all_modal = torch.Tensor([])
         # Invoke C++/CUDA rasterization routine
         return rasterize_gaussians(
             means3D,
@@ -215,6 +216,7 @@ class GaussianRasterizer(nn.Module):
             scales, 
             rotations,
             cov3D_precomp,
+            all_modal, # modal
             raster_settings, 
         )
 
