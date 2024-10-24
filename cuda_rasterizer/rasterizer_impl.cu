@@ -606,6 +606,7 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 void CudaRasterizer::Rasterizer::backwardspherical(
 	const int P, int D, int M, int R,
 	const float* background,
+	const float* all_modal_pixels, // modalities
 	const int width, int height,
 	const float* means3D,
 	const float* shs,

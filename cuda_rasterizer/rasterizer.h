@@ -77,7 +77,7 @@ namespace CudaRasterizer
 			const bool prefiltered,
 			float* out_color,
 			int* radii,
-			float* out_all_map, // modalities
+			float* out_all_modal, // modalities
 			float* out_plane_depth, // modalities
 			bool debug = false);
 

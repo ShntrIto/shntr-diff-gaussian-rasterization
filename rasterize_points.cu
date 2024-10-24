@@ -336,7 +336,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
   torch::Tensor dL_dmeans3D = torch::zeros({P, 3}, means3D.options());
   torch::Tensor dL_dmeans2D = torch::zeros({P, 3}, means3D.options());
   torch::Tensor dL_dcolors = torch::zeros({P, NUM_CHANNELS}, means3D.options());
-  torch::Tensor dL_dall_modal = torch::zerosj({P, NUM_ALL_MODAL}, means3D.options()); // modalities 
+  torch::Tensor dL_dall_modal = torch::zeros({P, NUM_ALL_MODAL}, means3D.options()); // modalities 
   torch::Tensor dL_dconic = torch::zeros({P, 2, 2}, means3D.options());
   torch::Tensor dL_dopacity = torch::zeros({P, 1}, means3D.options());
   torch::Tensor dL_dcov3D = torch::zeros({P, 6}, means3D.options());
@@ -348,6 +348,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
   {  
 	  CudaRasterizer::Rasterizer::backwardspherical(P, degree, M, R,
 	  background.contiguous().data<float>(),
+	  all_modal_pixels.contiguous().data<float>(), // modalities
 	  W, H, 
 	  means3D.contiguous().data<float>(),
 	  sh.contiguous().data<float>(),
@@ -367,7 +368,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	  reinterpret_cast<char*>(binningBuffer.contiguous().data_ptr()),
 	  reinterpret_cast<char*>(imageBuffer.contiguous().data_ptr()),
 	  dL_dout_color.contiguous().data<float>(),
-	  dL_dout_all_map.contiguous().data<float>(), // modalities
+	  dL_dout_all_modal.contiguous().data<float>(), // modalities
 	  dL_dout_plane_depth.contiguous().data<float>(), // modalities
 	  dL_dmeans2D.contiguous().data<float>(),
 	  dL_dconic.contiguous().data<float>(),  

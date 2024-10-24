@@ -679,7 +679,7 @@ renderCUDA(
 	const uint2 pix = { pix_min.x + block.thread_index().x, pix_min.y + block.thread_index().y };
 	const uint32_t pix_id = W * pix.y + pix.x;
 	const float2 pixf = { (float)pix.x, (float)pix.y };
-	const float2 sphere_pos = { 2.0*M_PI*(pix.x -0.5*W)/W, M_PI*(0.5*H - pix.y)/H };
+	const float2 sphere_pos = { 2.0f*M_PI*(pix.x -0.5f*W)/W, M_PI*(0.5f*H - pix.y)/H };
 	const float3 ray = { cosf(sphere_pos.y)*sinf(sphere_pos.x), -sinf(sphere_pos.y), cosf(sphere_pos.y)*cosf(sphere_pos.x) };
 
 	const bool inside = pix.x < W&& pix.y < H;
