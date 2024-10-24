@@ -76,7 +76,7 @@ namespace CudaRasterizer
 			const float tan_fovx, float tan_fovy,
 			const bool prefiltered,
 			float* out_color,
-			int* radii = nullptr,
+			int* radii,
 			float* out_all_map, // modalities
 			float* out_plane_depth, // modalities
 			bool debug = false);
