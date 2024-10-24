@@ -20,32 +20,32 @@
 
 namespace FORWARD
 {
-	// Perform initial steps for each Gaussian prior to rasterization.
-	void preprocess(int P, int D, int M,
-		const float* orig_points,
-		const glm::vec3* scales,
-		const float scale_modifier,
-		const glm::vec4* rotations,
-		const float* opacities,
-		const float* shs,
-		bool* clamped,
-		const float* cov3D_precomp,
-		const float* colors_precomp,
-		const float* viewmatrix,
-		const float* projmatrix,
-		const glm::vec3* cam_pos,
-		const int W, int H,
-		const float focal_x, float focal_y,
-		const float tan_fovx, float tan_fovy,
-		int* radii,
-		float2* points_xy_image,
-		float* depths,
-		float* cov3Ds,
-		float* colors,
-		float4* conic_opacity,
-		const dim3 grid,
-		uint32_t* tiles_touched,
-		bool prefiltered);
+	// // Perform initial steps for each Gaussian prior to rasterization.
+	// void preprocess(int P, int D, int M,
+	// 	const float* orig_points,
+	// 	const glm::vec3* scales,
+	// 	const float scale_modifier,
+	// 	const glm::vec4* rotations,
+	// 	const float* opacities,
+	// 	const float* shs,
+	// 	bool* clamped,
+	// 	const float* cov3D_precomp,
+	// 	const float* colors_precomp,
+	// 	const float* viewmatrix,
+	// 	const float* projmatrix,
+	// 	const glm::vec3* cam_pos,
+	// 	const int W, int H,
+	// 	const float focal_x, float focal_y,
+	// 	const float tan_fovx, float tan_fovy,
+	// 	int* radii,
+	// 	float2* points_xy_image,
+	// 	float* depths,
+	// 	float* cov3Ds,
+	// 	float* colors,
+	// 	float4* conic_opacity,
+	// 	const dim3 grid,
+	// 	uint32_t* tiles_touched,
+	// 	bool prefiltered);
 
 	void preprocessspherical(int P, int D, int M,
 		const float* orig_points,
@@ -88,7 +88,7 @@ namespace FORWARD
 		const float* bg_color,
 		float* out_color,
 		float* out_all_modal, // modalities
-		float* out_plane_depth, // modalities
+		float* out_plane_depth // modalities
 		); 
 }
 
