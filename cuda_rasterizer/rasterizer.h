@@ -69,15 +69,16 @@ namespace CudaRasterizer
 			const float scale_modifier,
 			const float* rotations,
 			const float* cov3D_precomp,
+			const float* all_modal, // modalities
 			const float* viewmatrix,
 			const float* projmatrix,
 			const float* cam_pos,
 			const float tan_fovx, float tan_fovy,
 			const bool prefiltered,
 			float* out_color,
-			float* out_depth, // depth
-			float* out_lf, // likelihood
 			int* radii = nullptr,
+			float* out_all_map, // modalities
+			float* out_plane_depth, // modalities
 			bool debug = false);
 
 		static void backward(
@@ -116,10 +117,12 @@ namespace CudaRasterizer
 		static void backwardspherical(
 			const int P, int D, int M, int R,
 			const float* background,
+			const float* all_modal_pixels, // modalities
 			const int width, int height,
 			const float* means3D,
 			const float* shs,
 			const float* colors_precomp,
+			const float* all_modals, // modalities
 			const float* scales,
 			const float scale_modifier,
 			const float* rotations,
@@ -133,17 +136,18 @@ namespace CudaRasterizer
 			char* binning_buffer,
 			char* image_buffer,
 			const float* dL_dpix,
-			const float* dL_ddpix, // depth
+			const float* dL_dout_all_modal, // modalities
+			const float* dL_dout_plane_depth, // modalities
 			float* dL_dmean2D,
 			float* dL_dconic,
 			float* dL_dopacity,
 			float* dL_dcolor,
-			float* dL_ddepth, // depth
 			float* dL_dmean3D,
 			float* dL_dcov3D,
 			float* dL_dsh,
 			float* dL_dscale,
 			float* dL_drot,
+			float* dL_dall_modal, // modalities
 			bool debug);
 	};
 };

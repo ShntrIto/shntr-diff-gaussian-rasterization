@@ -194,7 +194,7 @@ RasterizeGaussiansSphericalCUDA(
 		scale_modifier,
 		rotations.contiguous().data_ptr<float>(),
 		cov3D_precomp.contiguous().data<float>(), 
-		all_map.contiguous().data<float>(), // modalities
+		all_modal.contiguous().data<float>(), // modalities
 		viewmatrix.contiguous().data<float>(), 
 		projmatrix.contiguous().data<float>(),
 		campos.contiguous().data<float>(),

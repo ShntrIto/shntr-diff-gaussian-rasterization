@@ -694,7 +694,7 @@ renderCUDA(
 	__shared__ float2 collected_xy[BLOCK_SIZE];
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
 	__shared__ float collected_colors[C * BLOCK_SIZE];
-	__shared__ float collected_modals[MODAL_N * BLOCK_SIZE]; // modalities
+	__shared__ float collected_all_modals[MODAL_N * BLOCK_SIZE]; // modalities
 
 	// In the forward, we stored the final value for T, the
 	// product of all (1 - alpha) factors. 
@@ -709,20 +709,20 @@ renderCUDA(
 	float accum_rec[C] = { 0 };
 	float accum_all_modal[MODAL_N] = { 0 }; // modalities
 	float dL_dpixel[C];
-	float dL_dout_all_modal[MAP_N]; // modalities
+	float dL_dout_all_modal[MODAL_N]; // modalities
 	if (inside)
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
 		for (int i = 0; i < MODAL_N; i++)
 			dL_dout_all_modal[i] = dL_dout_all_modals[i * H * W + pix_id]; // modalities
 
-		const float3 normal = {all_modal_pixels[pix_id], all_map_pixels[H * W + pix_id], all_map_pixels[2 * H * W + pix_id]};
+		const float3 normal = {all_modal_pixels[pix_id], all_modal_pixels[H * W + pix_id], all_modal_pixels[2 * H * W + pix_id]};
 		const float distance = all_modal_pixels[4 * H * W + pix_id];
 		const float tmp = (normal.x * ray.x + normal.y * ray.y + normal.z * ray.z + 1.0e-8);
 		dL_dout_all_modal[MODAL_N-1] += (-dL_dout_plane_depths[pix_id] / tmp);
-		dL_dout_all_modal[0] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.x)
-		dL_dout_all_modal[1] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.y)
-		dL_dout_all_modal[2] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.z)
+		dL_dout_all_modal[0] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.x);
+		dL_dout_all_modal[1] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.y);
+		dL_dout_all_modal[2] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.z);
 
 	float last_alpha = 0;
 	float last_color[C] = { 0 };
@@ -752,7 +752,6 @@ renderCUDA(
 			collected_id[block.thread_rank()] = coll_id;
 			collected_xy[block.thread_rank()] = points_xy_image[coll_id];
 			collected_conic_opacity[block.thread_rank()] = conic_opacity[coll_id];
-			collected_depths[block.thread_rank()] = depths[coll_id]; // depth
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
 			for (int i = 0; i < MODAL_N; i++)
@@ -805,7 +804,7 @@ renderCUDA(
 				// many that were affected by this Gaussian.
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * dL_dchannel);
 			}
-			for(int ch - 0; ch < MODAL_N; ch++)
+			for(int ch = 0; ch < MODAL_N; ch++)
 			{
 				const float c = collected_all_modals[ch * BLOCK_SIZE + j]; // modalities
 				// Update last color (to be used in the next iteration)
@@ -1021,7 +1020,7 @@ void BACKWARD::render(
 		means2D,
 		conic_opacity,
 		colors,
-		all_modal, // modalities
+		all_modals, // modalities
 		all_modal_pixels, // modalities
 		final_Ts,
 		n_contrib,
