@@ -1013,7 +1013,7 @@ void BACKWARD::render(
 	float* dL_dcolors,
 	float* dL_dall_modal) // modalities
 {
-	renderCUDA<NUM_CHANNELS> << <grid, block >> >(
+	renderCUDA<NUM_CHANNELS, NUM_ALL_MODAL> << <grid, block >> >(
 		ranges,
 		point_list,
 		W, H,

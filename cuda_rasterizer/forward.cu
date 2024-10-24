@@ -401,7 +401,7 @@ __global__ void preprocesssphericalCUDA(int P, int D, int M,
 // Main rasterization method. Collaboratively works on one tile per
 // block, each thread treats one pixel. Alternates between fetching 
 // and rasterizing data.
-template <uint32_t CHANNELS>
+template <uint32_t CHANNELS, uint32_t ALL_MODAL>
 __global__ void __launch_bounds__(BLOCK_X * BLOCK_Y)
 renderCUDA(
 	const uint2* __restrict__ ranges,
@@ -525,7 +525,7 @@ renderCUDA(
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
 		for (int ch = 0; ch < ALL_MODAL; ch++)
 			out_all_modal[ch * H * W + pix_id] = All_modal[ch];
-			out_plane_depth[pix_id] = All_map[4] / -(All_map[0]*ray.x + All_map[1]*ray.y + All_map[2]*ray.z + 1.0e-8);
+			out_plane_depth[pix_id] = All_modal[4] / -(All_modal[0]*ray.x + All_modal[1]*ray.y + All_modal[2]*ray.z + 1.0e-8);
 	}
 }
 
@@ -546,7 +546,7 @@ void FORWARD::render(
 	float* out_plane_depth // modalities
 	)
 {
-	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
+	renderCUDA<NUM_CHANNELS, NUM_ALL_MODAL> << <grid, block >> > (
 		ranges,
 		point_list,
 		W, H,
