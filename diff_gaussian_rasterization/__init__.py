@@ -27,6 +27,7 @@ def rasterize_gaussians(
     scales,
     rotations,
     cov3Ds_precomp,
+    all_modal, # depth, normal, alpha のマルチモーダルを含む
     raster_settings,
 ):
     return _RasterizeGaussians.apply(
@@ -38,6 +39,7 @@ def rasterize_gaussians(
         scales,
         rotations,
         cov3Ds_precomp,
+        all_modal, # modal
         raster_settings,
     ) # apply は，自作の順伝播・逆伝播を使った自動微分に必要
 
@@ -53,6 +55,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         scales,
         rotations,
         cov3Ds_precomp,
+        all_modal, # modal
         raster_settings,
     ):
 
@@ -66,6 +69,7 @@ class _RasterizeGaussians(torch.autograd.Function):
             rotations,
             raster_settings.scale_modifier,
             cov3Ds_precomp,
+            all_modal, # modal
             raster_settings.viewmatrix,
             raster_settings.projmatrix,
             raster_settings.tanfovx,
@@ -81,24 +85,26 @@ class _RasterizeGaussians(torch.autograd.Function):
 
         # Invoke C++/CUDA rasterizer
         if raster_settings.spherical:
-            num_rendered, color, depth, lf, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args) # detph, likelihood
+            # modal
+            num_rendered, color, radii, out_modal, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_spherical_gaussians(*args)
         else:
-            num_rendered, color, depth, lf, radii, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args) # depth, likelihood
+            assert("Not implemented yet")
+            # modal
+            # num_rendered, color, radii, out_modal, geomBuffer, binningBuffer, imgBuffer = _C.rasterize_gaussians(*args) # depth, likelihood
 
         # Keep relevant tensors for backward
         ctx.raster_settings = raster_settings
         ctx.num_rendered = num_rendered
         ctx.save_for_backward(colors_precomp, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer)
-        return color, depth, radii, lf # depth, likelihood
+        return color, radii, out_modal # depth, likelihood
 
     @staticmethod
-    def backward(ctx, grad_out_color, grad_out_depth, _1, _2): # depth
-        # grad_out_lf は逆伝播しない
+    def backward(ctx, grad_out_color, grad_out_depth, grad_out_all_modal):
 
         # Restore necessary values from context
         num_rendered = ctx.num_rendered
         raster_settings = ctx.raster_settings
-        colors_precomp, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer = ctx.saved_tensors
+        all_modal_precomp, colors_precomp, all_modal, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer = ctx.saved_tensors
 
         # Restructure args as C++ method expects them
         args = (raster_settings.bg,
@@ -114,7 +120,7 @@ class _RasterizeGaussians(torch.autograd.Function):
                 raster_settings.tanfovx, 
                 raster_settings.tanfovy, 
                 grad_out_color,
-                grad_out_depth, # depth
+                grad_out_all_modal, # modal
                 sh, 
                 raster_settings.sh_degree, 
                 raster_settings.campos,
@@ -126,9 +132,10 @@ class _RasterizeGaussians(torch.autograd.Function):
 
         # Compute gradients for relevant tensors by invoking backward method
         if raster_settings.spherical: # depth
-            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_spherical_gaussians_backward(*args)
+            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations, grad_all_modal = _C.rasterize_spherical_gaussians_backward(*args)
         else: # depth
-            grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
+            assert("Not implemented yet")
+            # grad_means2D, grad_colors_precomp, grad_opacities, grad_means3D, grad_cov3Ds_precomp, grad_sh, grad_scales, grad_rotations = _C.rasterize_gaussians_backward(*args)
 
         grads = (
             grad_means3D,
@@ -139,6 +146,7 @@ class _RasterizeGaussians(torch.autograd.Function):
             grad_scales,
             grad_rotations,
             grad_cov3Ds_precomp,
+            grad_all_modal, # modal
             None,
         )
 

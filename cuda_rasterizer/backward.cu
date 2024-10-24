@@ -648,7 +648,7 @@ __global__ void preprocesssphericalCUDA(
 
 
 // Backward version of the rendering procedure.
-template <uint32_t C>
+template <uint32_t C, uint32_t MODAL_N>
 __global__ void __launch_bounds__(BLOCK_X * BLOCK_Y)
 renderCUDA(
 	const uint2* __restrict__ ranges,
@@ -658,16 +658,18 @@ renderCUDA(
 	const float2* __restrict__ points_xy_image,
 	const float4* __restrict__ conic_opacity,
 	const float* __restrict__ colors,
-	const float* __restrict__ depths, // depth
+	const float* __restrict__ all_modals, // modalities
+	const float* __restrict__ all_modal_pixels, // modalities
 	const float* __restrict__ final_Ts,
 	const uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ dL_dpixels,
-	const float* __restrict__ dL_ddpixels, // depth
+	const float* __restrict__ dL_dout_all_modals, // modalities
+	const float* __restrict__ dL_dout_plane_depths, // modalities
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
 	float* __restrict__ dL_dcolors,
-	float* __restrict__ dL_ddepths)
+	float* __restrict__ dL_dall_modal) // modalities
 {
 	// We rasterize again. Compute necessary block info.
 	auto block = cg::this_thread_block();
@@ -677,6 +679,8 @@ renderCUDA(
 	const uint2 pix = { pix_min.x + block.thread_index().x, pix_min.y + block.thread_index().y };
 	const uint32_t pix_id = W * pix.y + pix.x;
 	const float2 pixf = { (float)pix.x, (float)pix.y };
+	const float2 sphere_pos = { 2*M_PI*(pix.x -0.5*W)/W, M_PI*(0.5*H - pix.y)/H };
+	const float3 ray = { cosf(sphere_pos.y)*sinf(sphere_pos.x), -sinf(sphere_pos.y), cosf(sphere_pos.y)*cosf(sphere_pos.x) };
 
 	const bool inside = pix.x < W&& pix.y < H;
 	const uint2 range = ranges[block.group_index().y * horizontal_blocks + block.group_index().x];
@@ -690,7 +694,7 @@ renderCUDA(
 	__shared__ float2 collected_xy[BLOCK_SIZE];
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
 	__shared__ float collected_colors[C * BLOCK_SIZE];
-	__shared__ float collected_depths[BLOCK_SIZE]; // depth
+	__shared__ float collected_modals[MODAL_N * BLOCK_SIZE]; // modalities
 
 	// In the forward, we stored the final value for T, the
 	// product of all (1 - alpha) factors. 
@@ -703,17 +707,26 @@ renderCUDA(
 	const int last_contributor = inside ? n_contrib[pix_id] : 0;
 
 	float accum_rec[C] = { 0 };
-	float accum_recd[1] = { 0 }; // depth
+	float accum_all_modal[MODAL_N] = { 0 }; // modalities
 	float dL_dpixel[C];
-	float dL_ddepth[1]; // depth
+	float dL_dout_all_modal[MAP_N]; // modalities
 	if (inside)
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-		dL_ddepth[0] = dL_ddpixels[pix_id]; // depth
+		for (int i = 0; i < MODAL_N; i++)
+			dL_dout_all_modal[i] = dL_dout_all_modals[i * H * W + pix_id]; // modalities
+
+		const float3 normal = {all_modal_pixels[pix_id], all_map_pixels[H * W + pix_id], all_map_pixels[2 * H * W + pix_id]};
+		const float distance = all_modal_pixels[4 * H * W + pix_id];
+		const float tmp = (normal.x * ray.x + normal.y * ray.y + normal.z * ray.z + 1.0e-8);
+		dL_dout_all_modal[MODAL_N-1] += (-dL_dout_plane_depths[pix_id] / tmp);
+		dL_dout_all_modal[0] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.x)
+		dL_dout_all_modal[1] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.y)
+		dL_dout_all_modal[2] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.z)
 
 	float last_alpha = 0;
 	float last_color[C] = { 0 };
-	float last_depth[1] = { 0 }; // depth
+	float last_all_modal[MODAL_N] = { 0 }; // modalities
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
@@ -742,6 +755,8 @@ renderCUDA(
 			collected_depths[block.thread_rank()] = depths[coll_id]; // depth
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
+			for (int i = 0; i < MODAL_N; i++)
+				collected_all_modals[i * BLOCK_SIZE + block.thread_rank()] = all_modals[coll_id * MODAL_N + i]; // modalities
 		}
 		block.sync();
 
@@ -790,13 +805,20 @@ renderCUDA(
 				// many that were affected by this Gaussian.
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * dL_dchannel);
 			}
+			for(int ch - 0; ch < MODAL_N; ch++)
+			{
+				const float c = collected_all_modals[ch * BLOCK_SIZE + j]; // modalities
+				// Update last color (to be used in the next iteration)
+				accum_all_modal[ch] = last_alpha * last_all_modal[ch] + (1.f - last_alpha) * accum_all_modal[ch];
+				last_all_modal[ch] = c;
 
-			const float depth = collected_depths[j]; // depth
-			accum_recd[0] = last_alpha * last_depth[0] + (1.f - last_alpha) * accum_recd[0];
-			last_depth[0] = depth;
-			const float dL_ddchannel = dL_ddepth[0];
-			dL_dalpha += (depth - accum_recd[0]) * dL_ddchannel;
-			atomicAdd(&(dL_ddepths[global_id]), dchannel_ddepth * dL_ddchannel); // depths
+				const float dL_dchannel = dL_dout_all_modal[ch]; // modalities
+				dL_dalpha += (c - accum_all_modal[ch]) * dL_dchannel;
+				// Update the gradients w.r.t. color of the Gaussian. 
+				// Atomic, since this pixel is just one of potentially
+				// many that were affected by this Gaussian.
+				atomicAdd(&(dL_dall_modal[global_id * MODAL_N + ch]), dchannel_dcolor * dL_dchannel); // modalities
+			}
 			
 			dL_dalpha *= T;
 			// Update last alpha (to be used in the next iteration)
@@ -978,16 +1000,18 @@ void BACKWARD::render(
 	const float2* means2D,
 	const float4* conic_opacity,
 	const float* colors,
-	const float* depths, // depths
+	const float* all_modals, // modalities
+	const float* all_modal_pixels, // modalities
 	const float* final_Ts,
 	const uint32_t* n_contrib,
 	const float* dL_dpixels,
-	const float* dL_ddepth, // depth
+	const float* dL_dout_all_modal, // modalities
+	const float* dL_dout_plane_depths, // modalities
 	float3* dL_dmean2D,
 	float4* dL_dconic2D,
 	float* dL_dopacity,
 	float* dL_dcolors,
-	float* dL_ddepths) // depth
+	float* dL_dall_modal) // modalities
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> >(
 		ranges,
@@ -997,15 +1021,17 @@ void BACKWARD::render(
 		means2D,
 		conic_opacity,
 		colors,
-		depths, //depths
+		all_modal, // modalities
+		all_modal_pixels, // modalities
 		final_Ts,
 		n_contrib,
 		dL_dpixels,
-		dL_ddepth, // depth
+		dL_dout_all_modal, // modalities
+		dL_dout_plane_depths, // modalities
 		dL_dmean2D,
 		dL_dconic2D,
 		dL_dopacity,
 		dL_dcolors,
-		dL_ddepths // depth
+		dL_dall_modal // modalities
 		);
 }

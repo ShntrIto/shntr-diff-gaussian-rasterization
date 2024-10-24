@@ -29,16 +29,18 @@ namespace BACKWARD
 		const float2* means2D,
 		const float4* conic_opacity,
 		const float* colors,
-		const float* depths,
+		const float* all_modals, // modalities
+		const float* all_modal_pixels, // modalities
 		const float* final_Ts,
 		const uint32_t* n_contrib,
 		const float* dL_dpixels,
-		const float* dL_ddepth, // depth
+		const float* dL_dout_all_map, // modalities
+		const float* dL_dout_plane_depth, // modalities
 		float3* dL_dmean2D,
 		float4* dL_dconic2D,
 		float* dL_dopacity,
 		float* dL_dcolors,
-		float* dL_ddepths); // depth
+		float* dL_dall_modal); // modalities
 
 	void preprocess(
 		int P, int D, int M,

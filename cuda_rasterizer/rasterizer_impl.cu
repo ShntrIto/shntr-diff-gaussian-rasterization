@@ -362,15 +362,16 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 	const float scale_modifier,
 	const float* rotations,
 	const float* cov3D_precomp,
+	const float* all_modal, // modalities
 	const float* viewmatrix,
 	const float* projmatrix,
 	const float* cam_pos,
 	const float tan_fovx, float tan_fovy,
 	const bool prefiltered,
 	float* out_color,
-	float* out_depth, // depth
-	float* out_lf, // likelihood
 	int* radii,
+	float* out_all_modal, // modalities
+	float* out_plane_depth, // modalities
 	bool debug)
 {
 	const float focal_y = tan_fovy;
@@ -475,9 +476,6 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 
 	// Let each tile blend its range of Gaussians independently in parallel
 	const float* feature_ptr = colors_precomp != nullptr ? colors_precomp : geomState.rgb;
-	// depth only for forward (BACKWARD PROPAGATION IS NOT IMPLEMENTED)
-	const float* depth_ptr = geomState.depths;
-	// norm probably can be calculated from cov3D...
 	CHECK_CUDA(FORWARD::render(
 		tile_grid, block,
 		imgState.ranges,
@@ -485,14 +483,14 @@ int CudaRasterizer::Rasterizer::forwardspherical(
 		width, height,
 		geomState.means2D,
 		feature_ptr,
-		depth_ptr, // depth
+		all_modal,
 		geomState.conic_opacity,
 		imgState.accum_alpha,
 		imgState.n_contrib,
 		background,
 		out_color,
-		out_depth, // depth
-		out_lf // likelihood
+		out_all_modal, // modalities
+		out_plane_depth // modalities
 		), debug) 
 
 	return num_rendered;
@@ -612,6 +610,7 @@ void CudaRasterizer::Rasterizer::backwardspherical(
 	const float* means3D,
 	const float* shs,
 	const float* colors_precomp,
+	const float* all_modals, // modalities
 	const float* scales,
 	const float scale_modifier,
 	const float* rotations,
@@ -625,17 +624,18 @@ void CudaRasterizer::Rasterizer::backwardspherical(
 	char* binning_buffer,
 	char* img_buffer,
 	const float* dL_dpix,
-	const float* dL_ddpix, // depth
+	const float* dL_dout_all_modal, // modalities
+	const float* dL_dout_plane_depth, // modalities
 	float* dL_dmean2D,
 	float* dL_dconic,
 	float* dL_dopacity,
 	float* dL_dcolor,
-	float* dL_ddepth, //depth
 	float* dL_dmean3D,
 	float* dL_dcov3D,
 	float* dL_dsh,
 	float* dL_dscale,
 	float* dL_drot,
+	float* dL_dall_modal, // modalities
 	bool debug)
 {
 	GeometryState geomState = GeometryState::fromChunk(geom_buffer, P);
@@ -670,16 +670,18 @@ void CudaRasterizer::Rasterizer::backwardspherical(
 		geomState.means2D,
 		geomState.conic_opacity,
 		color_ptr,
-		depth_ptr, // depth
+		all_modals, // modalities
+		all_modal_pixels, // mdoalities
 		imgState.accum_alpha,
 		imgState.n_contrib,
 		dL_dpix,
-		dL_ddpix, // depth
+		dL_dout_all_modal, // modalities
+		dL_dout_plane_depth, // modalities
 		(float3*)dL_dmean2D,
 		(float4*)dL_dconic,
 		dL_dopacity,
 		dL_dcolor,
-		dL_ddepth), debug) // depth
+		dL_dall_modal), debug) // modalities
 
 	// Take care of the rest of preprocessing. Was the precomputed covariance
 	// given to us or a scales/rot pair? If precomputed, pass that. If not,

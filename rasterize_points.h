@@ -76,6 +76,7 @@ RasterizeGaussiansSphericalCUDA(
 	const torch::Tensor& rotations,
 	const float scale_modifier,
 	const torch::Tensor& cov3D_precomp,
+	const torch::Tensor& all_modal, // modalities
 	const torch::Tensor& viewmatrix,
 	const torch::Tensor& projmatrix,
 	const float tan_fovx, 
@@ -94,6 +95,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	const torch::Tensor& means3D,
 	const torch::Tensor& radii,
     const torch::Tensor& colors,
+	const torch::Tensor& all_modals,
 	const torch::Tensor& scales,
 	const torch::Tensor& rotations,
 	const float scale_modifier,
@@ -103,7 +105,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	const float tan_fovx, 
 	const float tan_fovy,
     const torch::Tensor& dL_dout_color,
-    const torch::Tensor& dL_dout_depth, // depth
+    const torch::Tensor& dL_dout_all_modal, // modalities
+	const torch::Tensor& dL_dout_plane_depth, // modalities
 	const torch::Tensor& sh,
 	const int degree,
 	const torch::Tensor& campos,

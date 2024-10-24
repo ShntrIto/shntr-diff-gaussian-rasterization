@@ -81,14 +81,13 @@ namespace FORWARD
 		int W, int H,
 		const float2* points_xy_image,
 		const float* features,
-		const float* depths, // depth
+		const float* all_modal, // modalities
 		const float4* conic_opacity,
 		float* final_T,
 		uint32_t* n_contrib,
 		const float* bg_color,
 		float* out_color,
-		float* out_depth, //depth
-		float* out_lf // likelihood
+		float* out_all_modal, // modalities
 		); 
 }
 

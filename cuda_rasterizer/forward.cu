@@ -409,14 +409,15 @@ renderCUDA(
 	int W, int H,
 	const float2* __restrict__ points_xy_image,
 	const float* __restrict__ features,
-	const float* __restrict__ depths, // depths
+	const float* __restrict__ all_modal, // modalities
 	const float4* __restrict__ conic_opacity,
 	float* __restrict__ final_T,
 	uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ bg_color,
 	float* __restrict__ out_color,
-	float* __restrict__ out_depth,
-	float* __restrict__ out_lf) // depths
+	float* __restrict__ out_all_modal, // modalities
+	float* __restrict__ out_plane_depth // modalities
+	)
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -426,6 +427,8 @@ renderCUDA(
 	uint2 pix = { pix_min.x + block.thread_index().x, pix_min.y + block.thread_index().y };
 	uint32_t pix_id = W * pix.y + pix.x;
 	float2 pixf = { (float)pix.x, (float)pix.y };
+	const float2 sphere_pos = { 2*M_PI*(pix.x -0.5*W)/W, M_PI*(0.5*H - pix.y)/H };
+	const float3 ray = { cosf(sphere_pos.y)*sinf(sphere_pos.x), -sinf(sphere_pos.y), cosf(sphere_pos.y)*cosf(sphere_pos.x) };
 
 	// Check if this thread is associated with a valid pixel or outside.
 	bool inside = pix.x < W&& pix.y < H;
@@ -447,8 +450,7 @@ renderCUDA(
 	uint32_t contributor = 0;
 	uint32_t last_contributor = 0;
 	float C[CHANNELS] = { 0 };
-	float D[1] = { 0 }; // depth
-	float LF[1] = { 0 }; // likelihood
+	float All_modal[ALL_MODAL] = { 0 };
 
 	// Iterate over batches until all done or range is complete
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
@@ -502,8 +504,8 @@ renderCUDA(
 			for (int ch = 0; ch < CHANNELS; ch++)
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
 			
-			D[0] += depths[collected_id[j]] * alpha * T; // depth
-			LF[0] += (depths[collected_id[j]] / depths[collected_id[j]]) * alpha * T; // likelihood
+			for (int ch = 0; ch < ALL_MODAL; ch++)
+				All_modal[ch] += all_modal[collected_id[j] * ALL_MODAL + ch] * alpha * T;
 
 			T = test_T;
 
@@ -521,8 +523,9 @@ renderCUDA(
 		n_contrib[pix_id] = last_contributor;
 		for (int ch = 0; ch < CHANNELS; ch++)
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
-		out_depth[pix_id] = D[0]; // depth
-		out_lf[pix_id] = LF[0]; // likelihood
+		for (int ch = 0; ch < ALL_MODAL; ch++)
+			out_all_modal[ch * H * W + pix_id] = All_modal[ch];
+			out_plane_depth[pix_id] = All_map[4] / -(All_map[0]*ray.x + All_map[1]*ray.y + All_map[2]*ray.z + 1.0e-8);
 	}
 }
 
@@ -533,14 +536,14 @@ void FORWARD::render(
 	int W, int H,
 	const float2* means2D,
 	const float* colors,
-	const float* depths, // depth
+	const float* all_modal,
 	const float4* conic_opacity,
 	float* final_T,
 	uint32_t* n_contrib,
 	const float* bg_color,
 	float* out_color,
-	float* out_depth, // depth
-	float* out_lf // likelihood
+	float* out_all_modal, // modalities
+	float* out_plane_depth // modalities
 	)
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
@@ -549,14 +552,14 @@ void FORWARD::render(
 		W, H,
 		means2D,
 		colors,
-		depths, // depth
+		all_modal, // modaities
 		conic_opacity,
 		final_T,
 		n_contrib,
 		bg_color,
 		out_color,
-		out_depth, // depth 
-		out_lf // likelihood
+		out_all_modal, // modalities
+		out_plane_depth // modalities
 		); 
 }
 
