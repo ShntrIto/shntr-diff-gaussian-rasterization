@@ -730,14 +730,14 @@ renderCUDA(
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
-	const float ddelx_dx = 0.5 * W; 
-	const float ddely_dy = 0.5 * H;
+	// const float ddelx_dx = 0.5 * W; 
+	// const float ddely_dy = 0.5 * H;
 	
 	// Gradient of pixel coordinate w.r.t. omnidirectional
 	// screen-space viewport coordinates
 	// (-pi to pi for horizontal, -pi/2 to pi/2 for vertical)
-	// const float ddelx_dx = W / (2 * M_PI); 
-	// const float ddely_dy = H / M_PI;
+	const float ddelx_dx = W / (2 * M_PI); 
+	const float ddely_dy = H / M_PI;
 
 	// Traverse all Gaussians
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
