@@ -134,7 +134,7 @@ __device__ float3 computesphericalCov2D(
 
 	glm::mat3 J = glm::mat3(
 		( Width*t.z ) / ( M_PI*tx2_ptz2 ) * 0.5f, 					0.0f, 										-1.f * ( Width*t.x ) / ( M_PI*tx2_ptz2 ) * 0.5f,
-		-1.f * ( Hight*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Hight * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Hight*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
+		-1.f * ( Height*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Height * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Height*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
 		0.0f, 0.0f, 0.0f);
 
 	// R^T

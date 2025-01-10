@@ -285,7 +285,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 	const float* dL_dconics,
 	float3* dL_dmeans,
 	float* dL_dcov,
-	const int Hight, // use Height for introducing Jacobian
+	const int Height, // use Height for introducing Jacobian
 	const int Width  // use Width as well
 	)
 {
@@ -311,7 +311,7 @@ __global__ void computesphericalCov2DCUDA(int P,
     // -------------------- ErpGS Jacobian --------------------
 	glm::mat3 J = glm::mat3(
 		( Width*t.z ) / ( M_PI*tx2_ptz2 ) * 0.5f, 					0.0f, 										-1.f * ( Width*t.x ) / ( M_PI*tx2_ptz2 ) * 0.5f,
-		-1.f * ( Hight*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Hight * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Hight*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
+		-1.f * ( Height*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Height * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Height*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
 		0.0f, 0.0f, 0.0f);
 	// --------------------------------------------------------
 	
@@ -391,10 +391,6 @@ __global__ void computesphericalCov2DCUDA(int P,
 	float dL_dJ10 = W[0][0] * dL_dT10 + W[0][1] * dL_dT11 + W[0][2] * dL_dT12; // Add OmniGS Jacobian
 	float dL_dJ11 = W[1][0] * dL_dT10 + W[1][1] * dL_dT11 + W[1][2] * dL_dT12;
 	float dL_dJ12 = W[2][0] * dL_dT10 + W[2][1] * dL_dT11 + W[2][2] * dL_dT12;
-
-	float tz = 1.f / t.z;
-	float tz2 = tz * tz;
-	float tz3 = tz2 * tz;
 
 	// Useful variables for ErpGS Gradients
 	// float rec_tr = 1.f / tr;  			// 1/tr
