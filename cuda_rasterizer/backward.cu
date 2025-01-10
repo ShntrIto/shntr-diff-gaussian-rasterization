@@ -627,6 +627,7 @@ __global__ void preprocesssphericalCUDA(
     
     // Useful veriables for spherical projection
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+	float tr2 = tr * tr;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
     // -------------------- ErpGS Jacobian --------------------
