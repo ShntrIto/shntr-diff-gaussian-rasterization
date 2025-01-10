@@ -409,7 +409,7 @@ __global__ void computesphericalCov2DCUDA(int P,
 					-Height*t.x / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ11 +
 					Height*t.x*t.y*t.z / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
 	
-	float dL_dty = -Height*t.x / (M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ0 +
+	float dL_dty = -Height*t.x / (M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ10 +
 					-Height*t.z / (M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ12;
 	
 	float dL_dtz = Width * ( tx2 + 3.f*tz2 ) / ( 2.f*M_PI * tx2tz2*tx2tz2 ) * dL_dJ00 +
