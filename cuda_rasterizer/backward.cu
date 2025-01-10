@@ -396,30 +396,47 @@ __global__ void computesphericalCov2DCUDA(int P,
 	// float rec_tr = 1.f / tr;  			// 1/tr
 	// float rec_tr2 = rec_tr * rec_tr; 	// 1/(tr^2)
 	// float rec_tr4 = rec_tr2 * rec_tr2; 	// 1/(tr^4)
-	float tr4 = tr2 * tr2; 				// tr^4
 	float tx2 = t.x * t.x; 				// tx^2
-	float ty2 = t.y * t.y; 				// ty^2
 	float tz2 = t.z * t.z; 				// tz^2
 	float tx2tz2 = tx2 + tz2; 			// tx^2 + tz^2
 	float sqrt_tx2tz2 = sqrtf(tx2tz2); 	// sqrt(tx^2 + tz^2)
 	
 	// ------------------ ErpGS ------------------
 	// Gradients of loss w.r.t. transformed Gaussian mean t
-	float dL_dtx = -1.f*Width * ( t.x*t.z ) / (M_PI * tx2tz2 * tx2tz2) * dL_dJ00 +
-					Width * (tx2 - tz2) / ( 2.f * M_PI * tx2tz2 * tx2tz2 ) * dL_dJ02 +
-					Height*t.y * ( tz2*tr2 - 2.f * tx2 * tx2tz2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
-					Height*t.x * ( tr2 - 2.f*ty2 ) / (M_PI * tr4 * sqrt_tx2tz2) * dL_dJ11 +
-					-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+	float dL_dtx = -Width*t.x*t.z / ( M_PI * tx2tz2*tx2tz2) * dL_dJ00 +
+					-Width * ( tz2 + 3.f*tx2 ) / ( 2.f* M_PI * tx2tz2*tx2tz2 ) * dL_dJ02 +
+					-Height * ( 2.f*tx2 + tz2) / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+					-Height*t.x / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ11 +
+					Height*t.x*t.y*t.z / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
 	
-	float dL_dty = Height*t.x * ( tr2 - 2.f*ty2) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
-					2.f*Height*t.y*sqrt_tx2tz2 / ( M_PI * tr4 ) * dL_dJ11 +
-					Height*t.z *( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ12;
+	float dL_dty = -Height*t.x / (M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ0 +
+					-Height*t.z / (M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ12;
 	
-	float dL_dtz = Width * ( tx2 - tz2 ) / ( 2.f*M_PI * tx2tz2*tx2tz2) * dL_dJ00 +
+	float dL_dtz = Width * ( tx2 + 3.f*tz2 ) / ( 2.f*M_PI * tx2tz2*tx2tz2 ) * dL_dJ00 +
 					Width*t.x*t.z / ( M_PI * tx2tz2*tx2tz2 ) * dL_dJ02 +
-					-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
-					Height*t.z * ( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ11 +
-					Height*t.y * (tx2*tr2 - 2.f*tz2*tx2tz2 ) / (M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+					Height*t.x*t.y*t.z / ( M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+					Height*tz2 / ( M_PI * tr2 * sqrt_tx2tz2 ) * dL_dJ11 +
+					-Height*t.y * (tx2 + 2.f*tz2) / (M_PI * tr2 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+	// -------------------------------------------
+
+
+
+	// -------------------- ODGS ------------------
+	// float dL_dtx = -1.f*Width * ( t.x*t.z ) / (M_PI * tx2tz2 * tx2tz2) * dL_dJ00 +
+	// 				Width * (tx2 - tz2) / ( 2.f * M_PI * tx2tz2 * tx2tz2 ) * dL_dJ02 +
+	// 				Height*t.y * ( tz2*tr2 - 2.f * tx2 * tx2tz2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+	// 				Height*t.x * ( tr2 - 2.f*ty2 ) / (M_PI * tr4 * sqrt_tx2tz2) * dL_dJ11 +
+	// 				-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+	
+	// float dL_dty = Height*t.x * ( tr2 - 2.f*ty2) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+	// 				2.f*Height*t.y*sqrt_tx2tz2 / ( M_PI * tr4 ) * dL_dJ11 +
+	// 				Height*t.z *( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ12;
+	
+	// float dL_dtz = Width * ( tx2 - tz2 ) / ( 2.f*M_PI * tx2tz2*tx2tz2) * dL_dJ00 +
+	// 				Width*t.x*t.z / ( M_PI * tx2tz2*tx2tz2 ) * dL_dJ02 +
+	// 				-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+	// 				Height*t.z * ( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ11 +
+	// 				Height*t.y * (tx2*tr2 - 2.f*tz2*tx2tz2 ) / (M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
 	// -------------------------------------------
 
 	// float dL_dtx =  (-1.f*Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
