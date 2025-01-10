@@ -127,13 +127,14 @@ __device__ float3 computesphericalCov2D(
     // Transposes used to account for row-/column-major conventions.
 
     float3 t = transformPoint4x3(mean, viewmatrix);
-    
-    float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 
-	// Try OmniGS Jacobian
+	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+	float tr2 = tr * tr;
+	float tx2_ptz2 = t.x*t.x + t.z*t.z;
+
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*(t.x*t.x + t.z*t.z))*0.5f, 0.0f, -1.f*(Width*t.x)/(M_PI*(t.x*t.x + t.z*t.z))*0.5f,
-		-1.f*(Height*t.x*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)), Height*sqrtf(t.x*t.x + t.z*t.z)/(M_PI*t_length*t_length), -1.f*(Height*t.z*t.y)/(M_PI*t_length*t_length*sqrtf(t.x*t.x + t.z*t.z)),
+		( Width*t.z ) / ( M_PI*tx2_ptz2 ) * 0.5f, 					0.0f, 										-1.f * ( Width*t.x ) / ( M_PI*tx2_ptz2 ) * 0.5f,
+		-1.f * ( Hight*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Hight * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Hight*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
 		0.0f, 0.0f, 0.0f);
 
 	// R^T

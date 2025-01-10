@@ -305,21 +305,16 @@ __global__ void computesphericalCov2DCUDA(int P,
     // Useful veriables for spherical projection
 	// float t_length = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
-	float tx2_mtz2 = t.z*t.z - t.x*t.x;
+	float tr2 = tr * tr;
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
-    // Try Omni-GS Jacobian
+    // -------------------- ErpGS Jacobian --------------------
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1.f*(Width*t.x)/(M_PI*tx2_ptz2)*0.5f,
-		-1.f*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1.f*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
+		( Width*t.z ) / ( M_PI*tx2_ptz2 ) * 0.5f, 					0.0f, 										-1.f * ( Width*t.x ) / ( M_PI*tx2_ptz2 ) * 0.5f,
+		-1.f * ( Hight*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Hight * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Hight*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
 		0.0f, 0.0f, 0.0f);
+	// --------------------------------------------------------
 	
-	// Original 360 gaussian splatting Jacobian
-	// float3 t_unit_focal = {0.0f, 0.0f, t_length};
-	// glm::mat3 J = glm::mat3(
-	// 	h_x / t_unit_focal.z, 0.0f, -(h_x * t_unit_focal.x) / (t_unit_focal.z * t_unit_focal.z),
-	// 	0.0f, h_x / t_unit_focal.z, -(h_x * t_unit_focal.y) / (t_unit_focal.z * t_unit_focal.z),
-	// 	0, 0, 0);
 
 	glm::mat3 W = glm::mat3(
 		view_matrix[0], view_matrix[4], view_matrix[8],
@@ -401,32 +396,51 @@ __global__ void computesphericalCov2DCUDA(int P,
 	float tz2 = tz * tz;
 	float tz3 = tz2 * tz;
 
-	// Useful variables for OmniGS
-	float tr1 = 1.f / tr;  // 1/tr
-	float tr2 = tr1 * tr1; // 1/(tr^2)
-	float tr4 = tr2 * tr2; // 1/(tr^4)
-
-	// Gradients of loss w.r.t. transformed Gaussian mean t
-	// Original version
-	// float dL_dtx =  -h_x * tz2 * dL_dJ02;
-	// float dL_dty =  -h_y * tz2 * dL_dJ12;
-	// float dL_dtz = -h_x * tz2 * dL_dJ00 - h_y * tz2 * dL_dJ11 + (2 * h_x * t.x) * tz3 * dL_dJ02 + (2 * h_y * t.y) * tz3 * dL_dJ12;
+	// Useful variables for ErpGS Gradients
+	// float rec_tr = 1.f / tr;  			// 1/tr
+	// float rec_tr2 = rec_tr * rec_tr; 	// 1/(tr^2)
+	// float rec_tr4 = rec_tr2 * rec_tr2; 	// 1/(tr^4)
+	float tr4 = tr2 * tr2; 				// tr^4
+	float tx2 = t.x * t.x; 				// tx^2
+	float ty2 = t.y * t.y; 				// ty^2
+	float tz2 = t.z * t.z; 				// tz^2
+	float tx2tz2 = tx2 + tz2; 			// tx^2 + tz^2
+	float sqrt_tx2tz2 = sqrtf(tx2tz2); 	// sqrt(tx^2 + tz^2)
 	
+	// ------------------ ErpGS ------------------
 	// Gradients of loss w.r.t. transformed Gaussian mean t
-	// OmniGS version
-	float dL_dtx =  (-1.f*Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
-					(Width*tx2_mtz2)/(2.f*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
-					(Hight*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*t.x*t.x*tr2 + (t.x*t.x)/tx2_ptz2 - 1.f)) * dL_dJ10 + 
-					(Hight*t.x*tr2)/M_PI * (1.f/sqrtf(tx2_ptz2) - (2.f*sqrtf(tx2_ptz2)/tr2)) * dL_dJ11 +
-					(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*tr2)/sqrtf(tx2_ptz2) + 1.f/tx2_ptz2) * dL_dJ12;
-	float dL_dty =  (Hight*t.x*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (2.f*t.y*t.y*tr2 - 1.f) * dL_dJ10 +
-					(-2.f*Hight*t.y*sqrtf(tx2_ptz2)*tr4)/M_PI * dL_dJ11 + 
-					(-1.f*Hight*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2.f*t.y*t.y*tr2) * dL_dJ12;
-	float dL_dtz =  (Width*tx2_mtz2)/(2.f*M_PI*(tx2_ptz2)) * dL_dJ00 +
-					(Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
-					(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrt(tx2_ptz2)) * (2.f*tr2+1.f/tx2_ptz2) * dL_dJ10 +
-					(Hight*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1.f-2.f*tx2_ptz2*tr2) * dL_dJ11 +
-					(-1.f*Hight*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1.f-2.f*t.z*t.z*tr2+t.z*t.z/tx2_ptz2) * dL_dJ12;
+	float dL_dtx = -1.f*Width * ( t.x*t.z ) / (M_PI * tx2tz2 * tx2tz2) * dL_dJ00 +
+					Width * (tx2 - tz2) / ( 2.f * M_PI * tx2tz2 * tx2tz2 ) * dL_dJ02 +
+					Height*t.y * ( tz2*tr2 - 2.f * tx2 * tx2tz2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+					Height*t.x * ( tr2 - 2.f*ty2 ) / (M_PI * tr4 * sqrt_tx2tz2) * dL_dJ11 +
+					-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+	
+	float dL_dty = Height*t.x * ( tr2 - 2.f*ty2) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+					2.f*Height*t.y*sqrt_tx2tz2 / ( M_PI * tr4 ) * dL_dJ11 +
+					Height*t.z *( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ12;
+	
+	float dL_dtz = Width * ( tx2 - tz2 ) / ( 2.f*M_PI * tx2tz2*tx2tz2) * dL_dJ00 +
+					Width*t.x*t.z / ( M_PI * tx2tz2*tx2tz2 ) * dL_dJ02 +
+					-1.f*Height*t.x*t.y*t.z * ( 2.f*tx2tz2 + tr2 ) / ( M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ10 +
+					Height*t.z * ( tr2 - 2.f*ty2 ) / ( M_PI * tr4 * sqrt_tx2tz2 ) * dL_dJ11 +
+					Height*t.y * (tx2*tr2 - 2.f*tz2*tx2tz2 ) / (M_PI * tr4 * tx2tz2*sqrt_tx2tz2 ) * dL_dJ12;
+	// -------------------------------------------
+
+	// float dL_dtx =  (-1.f*Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ00 + 
+	// 				(Width*tx2_mtz2)/(2.f*M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
+	// 				(Hight*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*t.x*t.x*tr2 + (t.x*t.x)/tx2_ptz2 - 1.f)) * dL_dJ10 + 
+	// 				(Hight*t.x*tr2)/M_PI * (1.f/sqrtf(tx2_ptz2) - (2.f*sqrtf(tx2_ptz2)/tr2)) * dL_dJ11 +
+	// 				(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * ((2.f*tr2)/sqrtf(tx2_ptz2) + 1.f/tx2_ptz2) * dL_dJ12;
+	// float dL_dty =  (Hight*t.x*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (2.f*t.y*t.y*tr2 - 1.f) * dL_dJ10 +
+	// 				(-2.f*Hight*t.y*sqrtf(tx2_ptz2)*tr4)/M_PI * dL_dJ11 + 
+	// 				(-1.f*Hight*tz)/(M_PI*sqrtf(tx2_ptz2)) * (tr2-2.f*t.y*t.y*tr2) * dL_dJ12;
+	// float dL_dtz =  (Width*tx2_mtz2)/(2.f*M_PI*(tx2_ptz2)) * dL_dJ00 +
+	// 				(Width*t.x*t.z)/(M_PI*tx2_ptz2*tx2_ptz2) * dL_dJ02 +
+	// 				(Hight*t.x*t.y*t.z*tr2)/(M_PI*sqrt(tx2_ptz2)) * (2.f*tr2+1.f/tx2_ptz2) * dL_dJ10 +
+	// 				(Hight*t.z*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1.f-2.f*tx2_ptz2*tr2) * dL_dJ11 +
+	// 				(-1.f*Hight*t.y*tr2)/(M_PI*sqrtf(tx2_ptz2)) * (1.f-2.f*t.z*t.z*tr2+t.z*t.z/tx2_ptz2) * dL_dJ12;
+	// -------------------------------------------
+
 
 	// Account for transformation of mean to t
 	// t = transformPoint4x3(mean, view_matrix);
@@ -619,12 +633,12 @@ __global__ void preprocesssphericalCUDA(
 	float tr = sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
 	float tx2_ptz2 = t.x*t.x + t.z*t.z;
 
-    // Try Omni-GS Jacobian
+    // -------------------- ErpGS Jacobian --------------------
 	glm::mat3 J = glm::mat3(
-		(Width*t.z)/(M_PI*tx2_ptz2)*0.5f, 0.0f, -1.f*(Width*t.x)/(M_PI*tx2_ptz2)*0.5f,
-		-1.f*(Hight*t.x*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)), Hight*sqrtf(tx2_ptz2)/(M_PI*tr*tr), -1.f*(Hight*t.z*t.y)/(M_PI*tr*tr*sqrtf(tx2_ptz2)),
+		( Width*t.z ) / ( M_PI*tx2_ptz2 ) * 0.5f, 					0.0f, 										-1.f * ( Width*t.x ) / ( M_PI*tx2_ptz2 ) * 0.5f,
+		-1.f * ( Hight*t.x*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ), 	Hight * sqrtf( tx2_ptz2 ) / ( M_PI*tr2 ), 	-1.f * ( Hight*t.z*t.y ) / ( M_PI*tr2*sqrtf(tx2_ptz2) ),
 		0.0f, 0.0f, 0.0f);
-	// ******************
+	// --------------------------------------------------------
 
 	// Compute loss gradient w.r.t. 3D means due to gradients of 2D means
 	// OmniGS version
